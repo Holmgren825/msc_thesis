@@ -1,0 +1,41 @@
+\documentclass[12pt, a4paper]{article}
+\usepackage[tmargin=1.0cm, bmargin=2.5cm, lmargin=2cm, rmargin=2cm]{geometry}
+\usepackage[utf8]{inputenc}\DeclareUnicodeCharacter{2212}{-}
+\usepackage[T1]{fontenc}
+\usepackage{float}
+\usepackage{lmodern}
+\usepackage{hyperref}
+\hypersetup{
+colorlinks = true,
+linkcolor  = black,
+citecolor = black
+}
+% Bib stuff
+\usepackage[
+    backend=biber,
+    style=apa,
+]{biblatex}
+\setlength{\bibhang}{0pt}
+\setlength{\bibitemsep}{6pt}
+\addbibresource[]{../peak_water.bib}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{gensymb}
+\usepackage{upgreek}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\graphicspath{{./plots/}}
+\usepackage{xcolor, colortbl}
+% Setup for the captions
+\usepackage[hypcap=true,font={it}]{caption}
+\captionsetup{belowskip=2pt, aboveskip=2pt}
+\author{Erik Holmgren}
+\title{Master thesis proposal}
+\date{March 2021}
+\begin{document}
+\maketitle
+\section{Introduction}
+\cite{maussionOpenGlobalGlacier2019}
+\printbibliography
+\end{document}
