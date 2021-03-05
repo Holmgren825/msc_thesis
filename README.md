@@ -1,2 +1,2 @@
-# MSc thesis proposal
-Proposal for my master thesis - Peak water using the OGGM.
+# MSc thesis
+Repository for tracking work with master thesis - Peak water using the OGGM.
