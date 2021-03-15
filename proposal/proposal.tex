@@ -36,6 +36,7 @@ citecolor = black
 \begin{document}
 \maketitle
 \noindent
+\section{Motivation}
 Mass loss from glaciers has increased during the second half of the 20th century
 \parencite{vaughanObservationsCryosphere2013} and is prediced, in all current
 climate projections, to continue throughout the 21st century
@@ -64,14 +65,17 @@ important in regions with a warm and dry ablation season
 Indus basin where, during the pre-monsoon season, up to 60\% of the total
 irrigation volume comes from either snow or glacier melt -- resulting in an 11\%
 increase of the total crop production
-\parencite{biemansImportanceSnowGlacier2019}. The Indus basin is one example of
-large river basins which under the present climate experiences water scarcity --
-threatening the food security for millions of people
-\parencite{kummuClimatedrivenInterannualVariability2014}. The populated areas on
-the dry, western, slopes of the Andes are other examples of regions depending on
-glacier meltwater for potable water and power generation.
+\parencite{biemansImportanceSnowGlacier2019}. The Indus basin is also an example
+of large river basins which under the present climate experiences water scarcity
+-- threatening the food security for millions of people
+\parencite{kummuClimatedrivenInterannualVariability2014} in an area where large
+amounts of the freshwater resource is shared across state borders where the risk
+for amred conflict is high \parencite{schleussnerArmedconflictRisksEnhanced2016,
+pritchardAsiaShrinkingGlaciers2019}. The populated areas on the dry, western,
+slopes of the Andes are other examples of regions depending on glacier meltwater
+for potable water and power generation.
 \textcite{vergaraEconomicImpactsRapid2007} estimate the cost of mitigation and
-adaption to retreating glaciers in the Andes between US\$300 million up to US\$
+adaption to retreating glaciers in the Andes from US\$300 million up to US\$
 1.5 billion.
 % of glacier melt include significant contributions to sea level rise (e.g.
 % \cite{marzeionFutureSealevelChange2012a})
@@ -93,6 +97,66 @@ adaption to retreating glaciers in the Andes between US\$300 million up to US\$
 % water release by glacier melt reaches a maximum at intermediate altitude bands
 % \parencite{kaserContributionPotentialGlaciers2010}.
 
+\section{State of the art -- Glacial hydrology}
+In alpine catchments snow accumulation and snow melt are the main contributors
+to runoff generation, while the influence of precipitation is small, during the
+months between June and October \parencite{zappaSeasonalWaterBalance2003}. 
+
+The main factors controlling the discharge hydrograph are the topographical
+structure, the seasonal air temperature gradient, and the seasonal distribution
+of precipitation \parencite{zappaSeasonalWaterBalance2003}.
+
+Runoff peaks later in the summer -- when the melt line has crept further up and
+thus exposing more of the catchment area to melt \parencite{zappaSeasonalWaterBalance2003}.
+
+\textcite{kaserContributionPotentialGlaciers2010} estimated the societal
+importance of glacier melt water under the assumption that the glaciers were in
+equilibrium with the local climate -- any runoff from glacier net mass loss was
+not included in their analysis. \textcite{blissGlobalResponseGlacier2014} showed
+that glacier net mass loss is an important part of the total glacier runoff,
+indicating that the societal importance of glacier melt water might be higher
+than the estimates from \textcite{kaserContributionPotentialGlaciers2010}.
+
+The ratio between the summer runoff and total runoff of a glacier rises strongly
+with the glaciated area \parencite{janssonConceptGlacierStorage2003}.
+
+\section{Peak water using the OGGM}
+State of the art peak water estimations
+\parencite{rounceGlacierMassChange2020,hussGlobalscaleHydrologicalResponse2018}
+have relied on parametrizing the re-distribution of mass throughout the glacier
+with so called mass re-distribution curves developed by
+\textcite{hussFutureHighmountainHydrology2010}. The parameterization by
+\textcite{hussFutureHighmountainHydrology2010} is a clear step up in
+performance compared to previous ice flow parametrizations but still relies on
+known glacier measurements for calibration. The flow of non-measured glaciers
+is estimated from known glaciers of the same size. 
+
+Employing the Open Global Glacier Model (OGGM,
+\cite{maussionOpenGlobalGlacier2019}) for peak water calculations would be the
+first time a physical ice flow model is applied globally to calculate glacier
+runoff. It would be a step towards mitigating the problem of over
+parametrization present in the current global glacier models used for
+hydrological analysis. A new set of runoff estimates, based on a different
+modelling framework, will also broaden the scientific background about the
+subject. The OGGM uses the same mass balance scheme, a degree day model, as for
+example PyGEM (used by \cite{rounceGlacierMassChange2020}). Thus, any
+differences in the annual mass balance should stem from the different
+implementations of ice dynamics -- possibly leading to slightly different
+area/length estimations and thus a different runoff.
+
+In its current state OGGM does not save any hydrological outputs (not true any
+more...) so before any runoff calculations can be made this has to be added to
+the model and tested. The common approach is to use a fixed gauge -- a
+hypothetical measuring station at the terminus of the glacier, measuring all
+water leaving the initially glaciated area. This implies calculating the runoff,
+$Q$, from glacial melt $\alpha$, and liquid precipitation $p_{liquid}$:
+\begin{equation}
+    Q = p_{liquid} + \alpha - R,
+\end{equation}
+where $R$ is the refreezing of melt water within the glacier. The runoff from
+snow melt and liquid precipitation is calculated from the initially glaciated
+area and is, as the glaciated area shrinks, divided into two part: on glacier
+and off glacier runoff. 
 
 
 
