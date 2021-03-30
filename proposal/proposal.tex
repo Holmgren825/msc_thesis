@@ -1,5 +1,5 @@
 \documentclass[12pt, a4paper]{article}
-\usepackage[tmargin=1.0cm, bmargin=2.5cm, lmargin=2cm, rmargin=2cm]{geometry}
+\usepackage[tmargin=2.5cm, bmargin=2.5cm, lmargin=2cm, rmargin=2cm]{geometry}
 \usepackage[utf8]{inputenc}\DeclareUnicodeCharacter{2212}{-}
 \usepackage[T1]{fontenc}
 \usepackage{float}
@@ -43,10 +43,10 @@ Glacier mass loss has increased during the second half of the 20th century
 \parencite{vaughanObservationsCryosphere2013} and is predicted, in all current
 climate projections, to continue throughout the 21st century
 \parencite{ipccClimateChange20142014}. The magnitude of the end of century
-glacial mass loss varies greatly depending on the region and climate scenario --
-\textcite{hussNewModelGlobal2015} found global glacier volumes to decrease
-between 25\% (RCP2.6) and 48\% (RCP8.5) and regional losses varying between 20
-and 90\%.
+glacial mass loss varies greatly depending on the climate scenario and the
+region -- \textcite{hussNewModelGlobal2015} found global glacier volumes to
+decrease between 25\% (RCP2.6) and 48\% (RCP8.5) and regional losses varying
+between 20 and 90\%.
 
 % Simulating global glaciers \textcite{hussNewModelGlobal2015} found that the
 % global glacier volume will decrease with 25$\pm$5\% for RCP2.6, 33$\pm$8\% for
@@ -69,13 +69,19 @@ Indus basin where, during the pre-monsoon season, up to 60\% of the total
 irrigation volume comes from either snow or glacier melt -- resulting in an 11\%
 increase of the total crop production
 \parencite{biemansImportanceSnowGlacier2019}. Simultaneously, the Indus basin is
-an example of a large river basin which under the present climate experiences
+one example of a large river basin which under the present climate experiences
 water scarcity -- threatening the food security of millions of people
 \parencite{kummuClimatedrivenInterannualVariability2014}. This in an area where
 large amounts of the freshwater resource is shared across state borders where
 the risk for armed conflict is high
 \parencite{schleussnerArmedconflictRisksEnhanced2016,
-pritchardAsiaShrinkingGlaciers2019}. 
+pritchardAsiaShrinkingGlaciers2019}.
+\textcite{mishraDifferentialImpactClimate2020} found that during the period
+leading up to peak water, hydroelectric production from two basins in the
+Karakoram and Central Himalayan regions would benefit from increased flows.
+However, for the basin located in the Karakoram, post peak water benefits were
+highly variable, an indication of high spatial variations in the impacts of
+changes in glacial drainage.
 
 The populated areas on the dry, western, slopes of the Andes are other examples
 of regions depending on glacier meltwater for potable water and power
@@ -83,7 +89,18 @@ generation. \textcite{vergaraEconomicImpactsRapid2007} estimate the cost of
 mitigation and adaption to retreating glaciers in the Andes to between US\$300
 million and US\$ 1.5 billion.
 
-Maybe something on Europe? But no real scarcity here?
+\textcite{brunnerPresentFutureWater2019} found basins in Switzerland
+experiencing water shortage during the summer months in runoff simulations based
+on future climate scenarios. Shortages were elevated in basins highly dependent
+on runoff from ice and snow melt. However, the model used (PREVAH, see
+\cite{viviroliIntroductionHydrologicalModelling2009}) does not handle glacial
+evolution -- i.e. shrinking glaciers, thus likely overestimating the future
+contribution of glacial runoff to the seasonal water supply. 3 to 4\% of the
+total annual energy production from hydropower in Switzerland currently
+originates from glacier mass loss, a resource that is expected to decline over
+the coming decades \parencite{schaefliRoleGlacierRetreat2019}, signifying the
+importance of good meltwater estimations.
+
 % of glacier melt include significant contributions to sea level rise (e.g.
 % \cite{marzeionFutureSealevelChange2012a})
 
@@ -109,20 +126,20 @@ Glaciers store water in multiple ways -- as a liquid in surface snow and firn,
 in crevasses, drainage networks, englacial pockets and surface pools, or as a
 solid in the form of snow, firn and ice
 \parencite{janssonConceptGlacierStorage2003}. The main factors controlling the
-discharge hydrograph of an Alpine basin is the topographical structure, the
+discharge hydrograph of an alpine basin is the topographical structure, the
 seasonal air temperature gradient, the seasonal distribution of precipitation
 \parencite{zappaSeasonalWaterBalance2003}, and the percentage of glaciated area
 within the basin \parencite{janssonConceptGlacierStorage2003}. 
 
-Melt is the process with the largest contribution to glacier runoff, resulting
-in that the fraction of summer runoff to the annual runoff increases with an
-increased glaciation
+Melt is the largest contributor to glacier runoff, hence the fraction of summer
+runoff to the annual runoff increases with an increased glaciation
 \parencite{zappaSeasonalWaterBalance2003,chenInfluenceAlpineGlaciers1990}.
-Furthermore, \textcite{blissGlobalResponseGlacier2014} showed that glacier net
+\textcite{blissGlobalResponseGlacier2014} showed that glacier net
 mass loss is an important part of the total glacier runoff, indicating that the
 societal importance of glacier melt water might be higher than the estimates
 from \textcite{kaserContributionPotentialGlaciers2010}, where runoff estimates
-were done under an assumed equilibrium.
+were done under an assumed equilibrium and thus neglecting any runoff resulting
+from net mass loss.
 % Glacier runoff peaks late in the summer -- when the melt line has crept further
 % up and thus exposing more of the catchment area to melt
 % \parencite{zappaSeasonalWaterBalance2003}.
@@ -146,12 +163,12 @@ water is fairly straight forward: When climate change causes a glacier to
 recede, water is released from long term glacial storage and the annual runoff
 will increase until a maximum is reached i.e. peak water. At this point and
 forward the annual runoff will begin to decrease since the area of the shrinking
-glacier is not able to produce the same amounts of meltwater any longer
+glacier is no longer able to produce the same amounts of meltwater 
 \parencite{janssonConceptGlacierStorage2003}. If the glacier reaches a new state
 of equilibrium (zero net mass loss), the annual runoff from the initially
 glaciated area can return to pre peak water levels. However, runoff levels
 during the melt season can be expected to fall below the pre peak water levels
-since melt water from long term storage will be reduced 
+since melt water from long term storage will be reduced
 \parencite{hussGlobalscaleHydrologicalResponse2018,
 ragettliContrastingClimateChange2016, immerzeelRisingRiverFlows2013} (see Fig.
 \ref{fig:peak_water}) (This citation needs some work). 
@@ -174,10 +191,11 @@ relied on parametrizing the re-distribution of mass throughout the glacier with
 so called mass re-distribution curves, developed by
 \textcite{hussFutureHighmountainHydrology2010}. This parameterization is a clear
 step up in performance compared to previous ice flow parametrizations (e.g.
-length-area scaling), but still relies on multiple DEMs covering the glacier for
-calibration of the flow as a function of the mass balance. As a consequence, the
-flow, or mass re-distribution, of non-measured glaciers will be estimated from
-known glaciers of a similar size not considering topographical differences. 
+length-area scaling), but still relies on multiple digital elevation models
+covering the glacier for calibration of the flow as a function of the mass
+balance. As a consequence, the flow, or mass re-distribution, of non-measured
+glaciers will be estimated from known glaciers of a similar size, not
+considering topographical differences. 
 
 Employing the Open Global Glacier Model (OGGM,
 \cite{maussionOpenGlobalGlacier2019}) for peak water calculations would be the
@@ -186,12 +204,12 @@ runoff. It would be a step towards mitigating the problem of over
 parametrization present in the current global glacier models used for
 hydrological analysis. Including ice dynamics in global glacier simulations
 result in reduced ice losses compared to parametrized models
-\parencite{zekollariModellingFutureEvolution2019}, possibly resulting in
-more accurate runoff estimations. The inclusion of ice dynamics also enables the
+\parencite{zekollariModellingFutureEvolution2019}, possibly resulting in more
+accurate runoff estimations. The inclusion of ice dynamics also enables the
 glacier to grow, if climatic conditions allow it, and not only to shrink -- a
-limitation of parametrized ice dynamics. Using the OGGM will thus provide a new
-view of global glacier runoff and peak water estimations, expanding the
-grasp of the subject.
+limitation of mass re-distribution curves. Using the OGGM will thus provide a
+new view of global glacier runoff and peak water estimations, expanding what has
+already been done into a less physically constrained framework (meh...).
 
 % A new set of runoff estimates, based on a different modelling framework, will
 % broaden the scientific background about the subject. The OGGM uses the same
@@ -201,73 +219,81 @@ grasp of the subject.
 % possibly leading to slightly different area/length estimations and thus a
 % different runoff.
 
-In its current state the OGGM does not calculate any hydrological outputs for
-the glaciers (not true any more...). This has to be implemented before any
-runoff simulations. The common approach is to use a so called fixed gauge -- a
-hypothetical measuring station at the terminus of the glacier, measuring all
-water leaving the initially glaciated area. Runoff, $Q$, is calculated from the
-ablation $\alpha$, the liquid precipitation $p_{liquid}$, and the refreezing
-of meltwater within the glacier $R$ as:
+The common approach for calculating glacial runoff is to imagine a so called
+fixed gauge station -- a hypothetical measuring station at the terminus of the
+glacier, measuring all water leaving the initially glaciated area. Runoff, $Q$,
+is calculated from the ablation $\alpha$, the liquid precipitation $p_{liquid}$,
+and the refreezing of meltwater within the glacier $R$ as:
 \begin{equation}
     Q = \alpha + p_{liquid} - R.
 \end{equation}
-The contribution from ablation is made up of ice and snow melt, which can be
-estimated from the excess melt water of the glacier. This is where it becomes a
-bit tricky. Excess meltwater is produced during years with a negative mass
-balance, but since this can vary from year to year excess meltwater has to be
-calculated retroactively for each mass-balance year. This process starts with
-calculating the total excess meltwater for the period in question (i.e. net mass
-change). This can then be distributed, sequentially, to all negative
-mass-balance year where mass is not regained in the future
-\parencite{rounceGlacierMassChange2020}. Runoff originating from snow melt and
-liquid precipitation is measured from the initially glaciated area. As the
-glaciated area shrinks, this fraction of the runoff is divided into two parts:
-on glacier runoff and off glacier runoff. The OGGM does not parametrize
+The contribution from ablation is made up of ice and snow melt, which is
+estimated from the excess melt water of the glacier. The total excess meltwater
+is equivalent to the total mass loss over a time period, and is thus produced
+during years with a negative mass balance. Since the mass balance can vary from
+year to year excess meltwater is only produced form committed mass loss and thus
+has to be calculated retroactively for each mass-balance year. This process
+starts with calculating the total excess meltwater for the selected time period
+(e.g. net mass change at 2100). The total excess meltwater can then be
+distributed, sequentially, to all negative mass-balance years where mass is not
+regained in the future. This way excess melt water is maintained throughout the
+period \parencite{rounceGlacierMassChange2020}. Runoff originating from snow
+melt and liquid precipitation is measured from the initially glaciated area. As
+the glaciated area shrinks, this fraction of the runoff is divided into two
+parts: on glacier runoff and off glacier runoff. The OGGM does not parametrize
 refreezing, and instead relies on the calibration of the mass balance model to
-compensate for this.
+compensate for this. Other processes, evapotranspiration or ground-water
+recharge for instance, are not included in runoff calculations.
 
 
 \subsection{Research questions}
 For this thesis I will try to answer the following questions:
 \begin{enumerate}
     \item \textbf{How does the inclusion of ice dynamics in a global glacier
-    model change the future temporal and spatial variation of peak water?}
-    The inclusion of ice dynamics will results in a different annual mass
-    balance compared to models relying on parametrization. Since the runoff
+    model change the temporal and spatial variation of peak water?} The usage of
+    ice dynamics will results in a different annual mass balance compared to
+    models relying on parametrizing the mass re-distribution. Since the runoff
     estimations are based on the mass balance -- any changes to its calculation
     should result in a different estimate of peak water.
     \item \textbf{High mountain Asia, when will the basins most dependent on
     glacier runoff reach peak water?} This would basically be done to
-    corroborate on the previous studies that have been done. The \textbf{Indus
-    basin}.
-    \item \textbf{At which levels, and during what time, will runoff levels
+    corroborate on the previous studies. The \textbf{Indus
+    basin} is interesting since this is a region where glacial storage is
+    particularly important for e.g. crop production.
+    \item \textbf{At what levels, and during what time, will runoff levels
     begin to stabilise again?} Peak water gives a measure of when the annual
     runoff from glaciers reaches a maximum, but what about the long term
-    equilibrium? What will the future water supply look like?
+    equilibrium? What will the future water supply look like? Maybe European
+    basins are interesting to take a look at. Glaciers will decline much earlier
+    - hence we don't need to run the simulation for as long. How will it affect
+    water availability during warmer and drier summer seasons in Europe? Would
+    actually be very interesting to have look at this in conjunction with
+    extreme event indices (droughts etc.).
     \item \textbf{How will the seasonal hydrograph change for future runoff
-    projections?} Will glaciers release water earlier in the season? Or later?
-    Also connects to the previous question -- how is the annual runoff affected?
+    projections?} When will the seasonal discharge occur under future scenarios
+    and how might it affect the beneficial impacts of glacial water storage.
 \end{enumerate}
 
 \section{Schedule or something}
 Hydrological outputs were recently implemented in the OGGM, but still need to be
-evaluated and fully integrated into the model. To make sure that this is doing
-what is intended is the first step of this work. This include testing the
-implementation, running a few simulations on a smaller scale and document it.
-Based on results from previous studies, a number of regions interesting in
-regards to peak water can be selected for long term simulations using the OGGM.
-To evaluate the affect of ice dynamics on glacier runoff the results can then
-be compared to previous studies. A regional analysis is a natural continuation
-of this -- Take a look at the Indus basin.
+evaluated and fully integrated into the model. The first step of this work is to
+make sure that runoff calculations in the OGGM are working as intended. This
+include testing the implementation, running a few simulations on a smaller scale
+and document it. Based on results from previous studies, a number of regions
+interesting in regards to peak water can be selected for long term simulations
+using the OGGM. To evaluate the affect of including ice dynamics in glacier
+runoff simulations, the results can then be compared to previous studies (e.g.
+\cite{rounceGlacierMassChange2020,hussGlobalscaleHydrologicalResponse2018}). 
+
+\textbf{Something about simulations with monthly output -- to make it possible to observe seasonal changes in the hydrological output.}
 
 Evaluating future stabilised levels requires the glaciers to have reached a new
 equilibrium. If, and when, glaciers will reach a new equilibrium is kind of an
-open question and would require to run the simulation for 100s of years. So not
-actually sure if this will be possible.
+open question and would require to run the simulation for 100s of years. One way
+to approach this problem would be to take a look at glacier fed basins in
+Europe, where peak water is most likely already passed. Lots of glaciers are
+expected to disappear while some are approaching kind of a new equilibrium.
 
-The seasonal hydrology will be analysed in conjunction with the regional
-analysis of one or two regions where the global simulations showed interesting
-results in terms of peak water.
 
 
 
