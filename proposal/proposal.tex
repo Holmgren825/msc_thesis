@@ -32,7 +32,7 @@ urlcolor = NavyBlue
 \usepackage[hypcap=true, labelfont=bf]{caption}
 \captionsetup{belowskip=2pt, aboveskip=2pt}
 
-\author{Erik Holmgren \\ Advisor: Fabien Maussion}
+\author{Erik Holmgren \\ Advisor: Fabien Maussion, PhD}
 \title{Master thesis proposal: Peak water using the Open Global Glacier Model}
 \date{March 2021}
 \begin{document}
@@ -205,7 +205,7 @@ glacier, measuring all water leaving the initially glaciated area. Runoff, $Q$,
 is calculated from the ablation $\alpha$, the liquid precipitation $p_{liquid}$,
 and the refreezing of meltwater within the glacier $R$ as
 \begin{equation}
-    Q = \alpha + p_{liquid} - R.
+    Q = \alpha + p_{\mathrm{liquid}} - R.
 \end{equation}
 The contribution from ablation is made up of ice and snow melt, also known as
 the excess melt water from the glacier. The total excess meltwater is equivalent
@@ -255,51 +255,54 @@ glaciated areas.
 For this thesis I will work towards answering the following questions:
 \begin{enumerate}
     \item \textbf{How does the inclusion of ice dynamics in a global glacier
-    model change the temporal and spatial variation of peak water?} The usage of
-    ice dynamics will results in a different annual mass balance compared to
-    models relying on parametrizing the mass re-distribution. Since the runoff
-    estimations are based on the mass balance -- any changes to its calculation
-    should result in a different estimate of peak water.
+    model change the temporal and spatial variation of peak water?} The
+    inclusion of ice dynamics will result in a different annual mass balance
+    compared to models relying on parametrizing the mass re-distribution.
+    Because of this, the projected timing of peak water can be expected to
+    change.
     \item \textbf{When will the basins most dependent on glacier runoff reach
-    peak water? High Mounatin Asia} This would basically be done to corroborate
-    on the previous studies. The \textbf{Indus basin} is interesting since this
-    is a region where glacial storage is particularly important (e.g.
-    irrigation).
+    peak water?} The Indus basin lies in a region where glacial storage and the
+    subsequent seasonal delay of runoff is particularly important for
+    agriculture. Future changes to the runoff patterns would require adaption to
+    maintain water availability during the dry pre-monsoon season. An accurate
+    estimation of peak water would provide a time frame for this adaption. This
+    would corroborate on the studies done on High Mountain Asia by
+    \textcite{rounceGlacierMassChange2020} and
+    \textcite{hussGlobalscaleHydrologicalResponse2018}.
     \item \textbf{At what levels, and during which time, will runoff levels
-    begin to stabilise again?} Peak water gives a measure of when the annual
-    runoff from glaciers reaches a maximum, but what about the long term
-    equilibrium? What will the future water supply look like? European basins
-    are interesting since peak water has most likely already passed. How will it
-    affect water availability during warmer and drier summer seasons in Europe?
-    Would actually be very interesting to have look at this in conjunction with
-    extreme event indices (droughts etc.).
-    \item \textbf{How will the seasonal hydrograph change for future runoff
-    projections?} When will the seasonal discharge occur under future scenarios
-    and how might it affect the beneficial impacts of glacial water storage.
-    \item \textbf{Societal impacts???} There seems to be a gap in the knowledge
-    about societal importance of glacier runoff with regards to glacier mass
-    evolution. Impact estimates are not considering the possible runoff decline
-    in some regions.
+    begin to stabilise?} Peak water gives a measure of when the annual runoff
+    from glaciers reaches a maximum, but concerning societal impacts the long
+    term, stabilised levels, are more interesting. With seasonal weather
+    patterns likely becoming more extreme in Europe, e.g. more frequent heat
+    waves and droughts \parencite{ipccClimateChange20142014a}, good estimates of
+    future runoff levels in glaciated areas are essential for climate change
+    adaption and planning. This include an analysis of the seasonal hydrograph,
+    the annual runoff of a basin might return to pre-peak water levels, but
+    meltwater during the summer months might be reduced.
+
+    % \item \textbf{How will the seasonal hydrograph change for future runoff
+    % projections?} When will the seasonal discharge occur under future scenarios
+    % and how might it affect the beneficial impacts of glacial water storage.
+    % \item \textbf{Societal impacts???} There seems to be a gap in the knowledge
+    % about societal importance of glacier runoff with regards to glacier mass
+    % evolution. Impact estimates are not considering the possible runoff decline
+    % in some regions.
 \end{enumerate}
 
-\section{Schedule or something}
 Hydrological outputs were recently implemented in the OGGM, but still need to be
 evaluated and fully integrated into the model. The first step of this work is to
 make sure that runoff calculations in the OGGM are working as intended. This
 include testing the implementation, running a few simulations on a smaller scale
-and document it. Based on results from previous studies, a number of regions
-interesting in regards to peak water can be selected for long term simulations
-using the OGGM. To evaluate the affect of including ice dynamics in glacier
-runoff simulations, the results will be compared to previous studies (e.g.
-\cite{rounceGlacierMassChange2020,hussGlobalscaleHydrologicalResponse2018}). 
+and document it. In the current state OGGM outputs hydrological measurements on
+an annual scale. However, monthly outputs will be added, enabling the analysis
+of seasonal runoff.
 
-Runoff estimates of European basins can be analysed for patterns indicating a
-new equilibrium. The estimations can then be evaluated for their societal
-impacts.
-
-\textbf{Something about simulations with monthly output -- to make it possible to observe seasonal changes in the hydrological output. Have to check the current state of the OGGM.}
-
-
+Based on the results from previous studies, a number of regions interesting in
+regards to peak water can be selected for simulations using the OGGM. To
+evaluate the affect of including ice dynamics in glacier runoff simulations, the
+results will be compared to previous studies (e.g.
+\cite{rounceGlacierMassChange2020,hussGlobalscaleHydrologicalResponse2018}). The projected runoff estimates of European basins can be compared to current
+levels in order to assess the future impact of diminishing glacier melt.
 
 \printbibliography
 \end{document}
