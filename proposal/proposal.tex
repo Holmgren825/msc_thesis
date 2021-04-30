@@ -124,7 +124,7 @@ over the coming decades \parencite{schaefliRoleGlacierRetreat2019}.
 % water release by glacier melt reaches a maximum at intermediate altitude bands
 % \parencite{kaserContributionPotentialGlaciers2010}.
 
-\section{State of the art -- Glacial hydrology}
+\section{State of the art -- Glacier basin hydrology}
 Glaciers store water in multiple ways -- as a liquid in surface snow and firn,
 in crevasses, drainage networks, englacial pockets and surface pools, or as a
 solid in the form of snow, firn and ice
@@ -254,32 +254,43 @@ glaciated areas.
 \subsection{Research questions}
 For this thesis I will work towards answering the following questions:
 \begin{enumerate}
-    \item \textbf{How does the inclusion of ice dynamics in a global glacier
-    model change the temporal and spatial variation of peak water?} The
-    inclusion of ice dynamics will result in a different annual mass balance
-    compared to models relying on parametrizing the mass re-distribution.
-    Because of this, the projected timing of peak water can be expected to
-    change.
-    \item \textbf{When will the basins most dependent on glacier runoff reach
-    peak water?} The Indus basin lies in a region where glacial storage and the
-    subsequent seasonal delay of runoff is particularly important for
-    agriculture. Future changes to the runoff patterns would require adaption to
-    maintain water availability during the dry pre-monsoon season. An accurate
-    estimation of peak water would provide a time frame for this adaption. This
-    would corroborate on the studies done on High Mountain Asia by
-    \textcite{rounceGlacierMassChange2020} and
-    \textcite{hussGlobalscaleHydrologicalResponse2018}.
-    \item \textbf{At what levels, and during which time, will runoff levels
-    begin to stabilise?} Peak water gives a measure of when the annual runoff
-    from glaciers reaches a maximum, but concerning societal impacts the long
-    term, stabilised levels, are more interesting. With seasonal weather
-    patterns likely becoming more extreme in Europe, e.g. more frequent heat
-    waves and droughts \parencite{ipccClimateChange20142014a}, good estimates of
-    future runoff levels in glaciated areas are essential for climate change
-    adaption and planning. This include an analysis of the seasonal hydrograph,
-    the annual runoff of a basin might return to pre-peak water levels, but
-    meltwater during the summer months might be reduced.
+    \item \textbf{When will glaciated basins, in different geographical
+    settings, reach peak water?} Depending on the geographical setting, glaciers
+    will react differently to a changing climate. In low altitude/latitude
+    regions peak water is most likely already reached, while in other regions
+    peak water is decades away. An established estimation of the timing of peak
+    water is crucial for the adaption to future runoff levels in glaciated
+    basins. Especially in regions where the societal importance of glacier
+    meltwater is high, such as the Indus basin. Using the OGGM for global
+    glacier runoff simulations builds on top of previous studies of peak water
+    (\textcite{hussGlobalscaleHydrologicalResponse2018} and
+    \textcite{rounceGlacierMassChange2020}) by adding runoff estimations based
+    on a different modelling framework.
 
+    \item \textbf{How important is glacier melt water for the water supply of
+    glaciated basins during periods of low precipitation?}
+    \textcite{kaserContributionPotentialGlaciers2010} estimated the importance
+    of glacier melt water in glaciated basins under the current climate,
+    assuming glaciers in equilibrium. Since most glaciers will not be, if they
+    aren't already, in equilibrium with future climate, their method do not
+    extend onto future climate projections. The novel method from \textcite[In
+    review]{ulteeGlacialRunoffBuffers2020} somewhat alleviates this problem by
+    directly quantifying the influence of glacier melt water on the standardised
+    precipitation-evaporation index (SPEI). This is done by dividing the basin
+    into the glaciated and non-glaciated area. For the non-glaciated area the
+    available moisture is calculated directly from the GCM data, whereas for the
+    glaciated area the available moisture is calculated by a glacier model. This
+    gives the moisture content of the basin with the inclusion of glacier runoff
+    \begin{equation}
+        \label{eq:SPEI}
+        \tilde{p} = \frac{A - A_g}{A} p + \frac{A_g}{A} r,
+    \end{equation}
+    where $p$ is the GCM precipitation, $A$ the basin area, $A_g$ the glaciated
+    area, and $r$ is the glacier runoff. $\tilde{p}$ can then be used in
+    calculations of SPEI. Since SPEI can be calculated using climate projection
+    data, the future role of glacier as a buffer to drought in glaciated basins
+    can be evaluated. 
+    
     % \item \textbf{How will the seasonal hydrograph change for future runoff
     % projections?} When will the seasonal discharge occur under future scenarios
     % and how might it affect the beneficial impacts of glacial water storage.
@@ -295,14 +306,31 @@ make sure that runoff calculations in the OGGM are working as intended. This
 include testing the implementation, running a few simulations on a smaller scale
 and document it. In the current state OGGM outputs hydrological measurements on
 an annual scale. However, monthly outputs will be added, enabling the analysis
-of seasonal runoff.
+of the seasonal runoff.
 
-Based on the results from previous studies, a number of regions interesting in
-regards to peak water can be selected for simulations using the OGGM. To
-evaluate the affect of including ice dynamics in glacier runoff simulations, the
-results will be compared to previous studies (e.g.
-\cite{rounceGlacierMassChange2020,hussGlobalscaleHydrologicalResponse2018}). The projected runoff estimates of European basins can be compared to current
-levels in order to assess the future impact of diminishing glacier melt.
+When the hydrological diagnostics of the OGGM are fully implemented, glaciers in
+the 56 basins can be simulated, forced with different climate projections.
+Outputs can then be analysed for the evaluation of peak water and compared to
+the results of previous studies. This makes up working package 1 (WP1).
+
+For working package 2 (WP2) the outputs of WP1 are used to evaluate the
+influence of glacier runoff on basin wide moisture availability. This includes
+calculating SPEI both without glacier runoff and with glacier runoff, as
+described in Eq. \ref{eq:SPEI}. The results can then be evaluated in a number of
+ways. For instance, what runoff levels (which year) are needed to buffer periods
+of drought in future runoff scenarios.
+
+Working package 3 (WP3) consists of creating materials/visualisations used to
+present the results, and working package 4 (WP4) is dedicated to the writing of
+the thesis. WP1, 2 and 4 are done sequentially while WP3 is worked on
+simultaneously with the other wps from when results are available.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../timeline.pdf}
+    \caption{Illustration detailing the timeline of the project.}
+\end{figure}
+
+
 
 \printbibliography
 \end{document}
