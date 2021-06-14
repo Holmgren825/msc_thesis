@@ -1,5 +1,9 @@
 ## Jupyter
 .ipynb_checkpoints
+## Python
+__pycache__
+## Vim
+.vim
 ## Core latex/pdflatex auxiliary files:
 *.aux
 *.lof
