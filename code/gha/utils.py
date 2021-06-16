@@ -2,7 +2,6 @@
 
 import xarray as xr
 import numpy as np
-import geopandas as gpd
 import shapely.geometry as shpg
 from oggm import utils, workflow, tasks, cfg
 from oggm.shop import gcm_climate
@@ -11,21 +10,24 @@ import tempfile
 import os
 from pathos.multiprocessing import ProcessPool
 import itertools
+import json
+from gha import hydro
 
 
 def download_proj_data(rcp):
     '''
-    Small helper function to download data.
+    Small helper function to download CCSM4 climate projection data
+    from OGGMs archive. Makes use of the OGGM file downloader.
 
     Args
-    rcp: List of rcp scenarios.
+    rcp: List of rcp scenarios to download.
 
     Returns
     ft: Path to temperature file
     fp: Path to precipitation files
     '''
     # Base file paths
-    # Note that these dont contain any scenario data.
+    # Note that these dont contain any scenario specification.
     bp = 'https://cluster.klima.uni-bremen.de/~oggm/cmip5-' + \
          'ng/pr/pr_mon_CCSM4_{}_r1i1p1_g025.nc'
     bt = 'https://cluster.klima.uni-bremen.de/~oggm/cmip5-' + \
@@ -38,16 +40,30 @@ def download_proj_data(rcp):
 
 
 def download_clim_data():
-    '''Helper function to download climate projection data'''
+    '''Helper function to download reference climate data (CRU).'''
+
     f = 'https://cluster.klima.uni-bremen.de/~oggm/climate/cru/cru_cl2.nc.zip'
     fp = utils.file_downloader(f)
+    # Unzip it.
     with zipfile.ZipFile(fp, 'r') as zip_ref:
         zip_ref.extractall(fp[:-7])
+
     return fp[:-7] + '/cru_cl2.nc'
 
 
 def select_basin_data(df, basin):
-    '''Makes a selection of an xarray dataset from a basin (shapefile)'''
+    '''Makes a selection in an xarray dataset based on the provided basin
+    (shapefile).
+
+    Args:
+    df     : xarray dataset. Can contain anything basically. But should be
+             climate data.  Should cover the coordinates of the basin.
+    basin  : geopandas series of a basin. Has to contain a basin shapefile.
+
+    Returns:
+    df_sel : xarray dataset with only the selected data.
+
+    '''
     # Region of interest.
     df_sel = df.salem.roi(geometry=basin.geometry)
 
@@ -72,14 +88,13 @@ def select_basin_data(df, basin):
 
 
 def process_clim_data(basin, rcp):
-    '''Downscales climate projection data for a rcp scenario for a
-    basin.
+    '''Downscales climate projection data to the basin for a rcp scenario.
 
     Args:
-    rcp: Strings - rcp scenario
-    basin: Geodataseries with basin.
+    basin  : Geodataseries with basin.
+    rcp    : Strings - rcp scenario
 
-    Return: Bias corrected data selection
+    Return : Bias corrected data selection
     '''
 
     # Get the projection data for the scenarios
@@ -110,12 +125,12 @@ def process_clim_data(basin, rcp):
 
         # Convert the precipitaion to mm per month
         ny, r = divmod(len(ds_p_sel.time), 12)
-        assert r == 0, r
+        assert r == 0
         dimo = [cfg.DAYS_IN_MONTH[m - 1] for m in
                 ds_p_sel['time.month']]
         # We need some numpy functionality.
         dimo = np.array(dimo)
-        # Reshape for broadcasting
+        # Reshape for broadcasting. We want to multiply all coordinates.
         dimo = dimo.reshape(-1, 1, 1)
         # Multiply with seconds per month.
         ds_p_sel['pr'] = ds_p_sel.pr * dimo * (60 * 60 * 24)
@@ -134,10 +149,10 @@ def process_clim_data(basin, rcp):
         ds_p_avg = ds_p_avg.groupby('time.month').mean(dim='time')
         # Anomaly
         ds_p_ano = ds_p_sel.groupby('time.month') - ds_p_avg
-        # Scaled anomaly?
-        ds_p_scaled = ds_p_sel.groupby('time.month') / ds_p_avg
+        # Scaled anomaly? Not used for now.
+        # ds_p_scaled = ds_p_sel.groupby('time.month') / ds_p_avg
 
-        # Now we can do the downscaling.
+        # Now we can do the downscaling/interpolation.
         # Temperature
         ds_t_sel_remap = ds_clim_sel.salem.grid.map_gridded_data(
                             ds_t_ano.tas.values, ds_t_ano.salem.grid,
@@ -148,11 +163,14 @@ def process_clim_data(basin, rcp):
                             ds_p_ano.pr.values, ds_p_ano.salem.grid,
                             interp='linear')
 
+        # Need the time series.
         time = ds_t_sel.time
+        # Create new DataArrays
+        # Temperature
         ds_t_sel = xr.DataArray(ds_t_sel_remap, dims=['time', 'lat', 'lon'],
                                 coords={'time': time, 'lat': ds_clim_sel.lat,
                                         'lon': ds_clim_sel.lon}, name='temp')
-
+        # Precipitation
         ds_p_sel = xr.DataArray(ds_p_sel_remap, dims=['time', 'lat', 'lon'],
                                 coords={'time': time, 'lat': ds_clim_sel.lat,
                                         'lon': ds_clim_sel.lon}, name='prcp')
@@ -160,15 +178,17 @@ def process_clim_data(basin, rcp):
         ds_selection = xr.Dataset({'temp': ds_t_sel, 'prcp': ds_p_sel})
 
         # Final selection of data for the basin, i.e. finer selection.
+        # Maybe more efficient to this earlier, interpolation on less data.
         ds_selection = select_basin_data(ds_selection, basin)
         # Climatology
         ds_clim_sel = select_basin_data(ds_clim_sel, basin)
 
-        # Add the bias to the climatology.
+        # Add the climatology (each month) to the projected anomaly.
         ds_selection['temp'] = ds_selection.temp.groupby('time.month') +\
             ds_clim_sel.temp
         ds_selection['prcp'] = ds_selection.prcp.groupby('time.month') +\
             ds_clim_sel.prcp
+        ds_selection['prcp'] = ds_selection['prcp'].clip(0)
         # Add some attributes to the data.
         ds_selection.attrs = {'basin': basin.RIVER_BASI, 'MRBID': basin.MRBID}
         ds_selection.temp.attrs = {'unit': 'K'}
@@ -180,14 +200,13 @@ def process_clim_data(basin, rcp):
 def select_glaciers(basin, gdf):
     '''Function to select the glaciers within a basin.
     -----
-    arguments:
-    basin: geopandas dataframe of the basin (one shapefile)
-    gdf: geopandas dataframe containing the glaciers of the
-    region.
+    Args:
+    basin  : geopandas dataframe of the basin (one shapefile)
+    gdf    : geopandas dataframe containing the glaciers of the
+             region.
 
     returns:
     geopandas dataframe of the glaciers within the basin.
-
     '''
     in_bas = [basin.geometry.contains(shpg.Point(x, y))[0]
               for (x, y) in zip(gdf.CenLon, gdf.CenLat)]
@@ -197,8 +216,10 @@ def select_glaciers(basin, gdf):
 def run_hydro_projections(gdirs, rcps):
     '''Small wrapper for running hydro simulations
     arguments:
-    gdirs: glacier directories.
-    rcps: list of rcp scenarios to run.
+
+    Args:
+    gdirs : glacier directories.
+    rcps  : list of rcp scenarios to run.
     '''
 
     for rcp in rcps:
@@ -236,26 +257,20 @@ def run_hydro_projections(gdirs, rcps):
 def process_basins(basins, rcps, data_dir=None):
     '''Process the climate data for one or more basin(s). Takes a list of basins
     (geoseries) and downloads projection data, selects the region of interest
-    and downscales it. Saves the basin to disk. If data_dir is not provided,
-    data is saved to a temporary folder.
+    and downscales it for each. Saves the basin to disk. If data_dir is not
+    provided, data is saved to a temporary folder.
 
     Args:
-    basins : Geopandas geoseries with basin spatial data. One or more basins.
-    rcps : list of strings with rcp scenarios.
+    basins   : Geopandas geoseries with basin spatial data. One or more basins.
+    rcps     : list of strings with rcp scenarios.
     data_dir : str : where to store the data. Provide an absolute path.
 
     Returns:
-    Nothing.
+    Nothing. Saves files to disk.
     '''
 
     # Where are we saving the data?
-    if data_dir is None:
-        tmp_dir = tempfile.gettempdir()
-        data_dir = mkdir(tmp_dir, 'basin_data')
-    # Check the path.
-    else:
-        if not os.path.exists(data_dir):
-            raise ValueError('data_dir is not a valid path.')
+    data_dir = init_data_dir(data_dir)
     # After we checked the path we can begin processing the basins. Want to use
     # multi processing to speed things up.
 
@@ -266,6 +281,8 @@ def process_basins(basins, rcps, data_dir=None):
         basin_dir = mkdir(data_dir, bid)
         # Get the data
         _, ds_selection = process_clim_data(basin, rcp)
+        # Calc PET.
+        ds_selection = hydro.calc_PET(ds_selection)
         # Save it to file.
         path = os.path.join(basin_dir, f'{bid}_{rcp}.nc')
         ds_selection.to_netcdf(path=path)
@@ -281,11 +298,49 @@ def process_basins(basins, rcps, data_dir=None):
         p.join()
 
 
+def init_data_dir(data_dir):
+    # Where are we saving the data?
+    if data_dir is None:
+        tmp_dir = tempfile.gettempdir()
+        data_dir = mkdir(tmp_dir, 'basin_data')
+    # Check the path.
+    else:
+        if not os.path.exists(data_dir):
+            raise ValueError('data_dir is not a valid path.')
+
+    return data_dir
+
+
 def mkdir(path, folder):
-    '''Create directory'''
+    '''Create a new folder at specified path.'''
     path = os.path.join(path, folder)
     try:
         os.makedirs(path)
     except FileExistsError:
         pass
     return path
+
+
+def select_glaciers_json(basin='all'):
+    '''Select glaciers within a basin by MRBID from a json-file,
+    which is stoored in the data directory.
+
+    Args:
+    basin: str : MRBID or 'all'.
+
+    Returns:
+    If basin is 'all' a list of all relevant glaciers is returned, for
+    initiating glacier simulations. If basin is a MRBID the list of glaciers
+    within that basin is returned.
+    '''
+
+    fpath = './data/rgi_ids_per_basin.json'
+    with open(fpath) as f:
+        basin_dict = json.load(f)
+
+    if basin.lower() != 'all':
+        glacier_list = basin_dict[basin]
+    else:
+        glacier_list = list(itertools.chain.from_iterable(basin_dict.values()))
+
+    return glacier_list
