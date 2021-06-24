@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import xarray as xr
+from scipy.stats import fisk
 
 
 def calc_PET(ds):
@@ -10,52 +11,53 @@ def calc_PET(ds):
     Args:
     ----
     ds: xarray dataset
-        Dataset with the temperaure and precipitaion projection data.
+        Dataset with the temperature and precipitation projection data.
 
     Returns:
     --------
     ds: xarray dataset
-        Updated data with projected temperature, precipiation and PET.
+        Updated data with projected temperature, precipitation and PET.
     '''
-# For the correction.
-# Average Julian day, is this then the average of all
-# the julian dates of the month?
+    # For the correction.
+    # Average Julian day, is this then the average of all
+    # the julian dates of the month?
     julian = ds.indexes['time'].to_datetimeindex().to_julian_date().values
-# Get the latitude from the ds
-# Convert the lat to radians
+    # Get the latitude from the ds
+    # Convert the lat to radians
     latitude = np.deg2rad(ds.lat).values
     latitude = latitude.reshape(-1, 1, 1)
     latitude = np.broadcast_to(latitude, (len(ds.lat), len(ds.lon),
                                           len(ds.time)))
-# Calculate the days in each month
+    # Calculate the days in each month
     NDM = ds.indexes['time'].to_datetimeindex().days_in_month.values
     NDM = NDM.reshape(1, 1, -1)
-# Calc solar declination
+    # Calc solar declination
     solar_declination = 0.4093 * np.sin((2 * np.pi * julian / 365) - 1.405)
-# Reshape for broadcasting.
+    # Reshape for broadcasting.
     solar_declination = solar_declination.reshape(1, 1, -1)
-# Calculate the hourly angle of sun rising
+    # Calculate the hourly angle of sun rising
     h_sun_angle = np.arccos(-np.tan(latitude) * np.tan(solar_declination))
-# Maximum number of sun hours
+    # Maximum number of sun hours
     N = (24 / np.pi) * h_sun_angle
-# # Correction coefficient
+    # Correction coefficient
     K = (N / 12) * (NDM / 30)
-# Uncorrected PET.
-# The annual heat index
+    # Uncorrected PET.
+    # The annual heat index
     temp = ds.temp - 273.15
     t_index = ((temp / 5)**1.514).groupby('time.year').sum()
 
-# We repeat each value 12 times.
-# Get m
+    # We repeat each value 12 times.
+    # Get m
     m = ((6.75 * 1e-7) * t_index**3) - ((7.71 * 1e-5) * t_index**2) +\
         ((1.79 * 1e-2) * t_index) + 0.49239
-# Final PET
+    # Final PET
     PET_u = (temp.groupby('time.year') / t_index)
     PET_u = PET_u.groupby('time.year') ** m
     PET_u = PET_u * 10
 
-# Add the corrected PET to the dataset.
+    # Add the corrected PET to the dataset.
     ds['PET'] = PET_u * 16 * K
+    ds['PET'] = ds['PET'].fillna(0)
 
     ds.PET.attrs = {'unit': 'mm month-1'}
     return ds
@@ -72,7 +74,7 @@ def get_discharge_df(basin, data_dir, rcp):
     data_dir: str
         Path of the data directory.
     rcp: str
-         String declarin the rcp scenario to process.
+         String declaring the rcp scenario to process.
     '''
     bid = str(basin.iloc[0].MRBID)
     basin_dir = os.path.join(data_dir, bid)
@@ -109,8 +111,8 @@ def get_discharge_df(basin, data_dir, rcp):
         monthly_runoff = monthly_runoff.clip(0)
 
         # Get the total precipitation and PET
-        hydro_ds = ds_proj[['prcp', 'PET']].sum(dim=['lat', 'lon'],
-                                                keep_attrs=True)
+        hydro_ds = ds_proj[['prcp', 'PET']].mean(dim=['lat', 'lon'],
+                                                 keep_attrs=True)
         # Projection hydro subset
         hydro_proj_ds = hydro_ds.sel(time=slice('2019', '2100'))
         # We add the glacier projections to this dataset.
@@ -137,7 +139,7 @@ def get_discharge_df(basin, data_dir, rcp):
         # Attributes
         hydro_proj_ds.prcp_adj.attrs = {'unit': 'mm month-1'}
 
-        # And finally calculate the moiste availability
+        # And finally calculate the moisture availability
         D = hydro_proj_ds['prcp'] - hydro_proj_ds['PET']
         hydro_proj_ds = hydro_proj_ds.assign(D=D)
         hydro_proj_ds.D.attrs = {'unit': 'mm month-1'}
@@ -146,6 +148,10 @@ def get_discharge_df(basin, data_dir, rcp):
             + hydro_proj_ds['glacier_runoff_adj'] - hydro_proj_ds['PET']
         hydro_proj_ds = hydro_proj_ds.assign(D_adj=D_adj)
         hydro_proj_ds.D_adj.attrs = {'unit': 'mm month-1'}
+        # Reference
+        D = hydro_ds['prcp'] - hydro_ds['PET']
+        hydro_ds = hydro_ds.assign(D=D)
+        hydro_ds.D.attrs = {'unit': 'mm month-1'}
 
         return hydro_proj_ds, hydro_ds
 
@@ -159,3 +165,45 @@ def get_adjusted_precipitation(ds, basin_area, glaciated_area):
     prcp_adj = ds['prcp'] * ice_free / basin_area
 
     return prcp_adj
+
+
+def calc_SPEI(ds, ds_hist, window):
+    '''Calculate SPEI for the given dataset.
+
+    Args:
+    -----
+    ds: xarray dataset
+       Containing data (moisture) from which to do the SPEI calculation.
+       D (prcp - PET) is needed.
+    ds_hist: xarray dataset
+        Containing the reference period. Discharge.
+    window: int
+        Size of the window (months) for the accumulated moisture.
+
+    Returns:
+    --------
+    SPEI: xarray dataArray
+    '''
+    # Start with calculating the rolling sum of desired length.
+    reference = ds_hist.rolling(time=window).sum().dropna(dim='time')
+    # Fit the fisk distribution.
+    fit = fisk.fit(reference)
+
+    # Constants, standardizing the percentiles,
+    C0 = 2.515517
+    C1 = 0.802853
+    C2 = 0.010328
+    d1 = 1.432788
+    d2 = 0.1819269
+    d3 = 0.001308
+    # Calculate the rolling sum of the investigated runoff.
+    D = ds.rolling(time=window).sum().dropna(dim='time')
+    # Calc P, use the cdf, paper is wrong saying the pdf.
+    P = 1 - fisk.cdf(D, *fit)
+    # Calc W for P <= 0.5 and P>0.5.
+    W = np.where(P < 0.5, np.sqrt(-2 * np.log(P)),
+                 -np.sqrt(-2 * np.log(1 - P)))
+    # Calc SPEI
+    SPEI = W - (C0 + C1 * W + C2 * W**2) / (1 + d1 * W + d2 * W**2 + d3 * W**3)
+    SPEI = xr.DataArray(SPEI, dims=['time'], coords={'time': D.time})
+    return SPEI
