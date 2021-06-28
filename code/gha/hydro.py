@@ -167,7 +167,7 @@ def get_adjusted_precipitation(ds, basin_area, glaciated_area):
     return prcp_adj
 
 
-def calc_SPEI(ds, ds_hist, window):
+def calc_SPEI(ds, ds_hist, window, parametric=True):
     '''Calculate SPEI for the given dataset.
 
     Args:
@@ -186,8 +186,6 @@ def calc_SPEI(ds, ds_hist, window):
     '''
     # Start with calculating the rolling sum of desired length.
     reference = ds_hist.rolling(time=window).sum().dropna(dim='time')
-    # Fit the fisk distribution.
-    fit = fisk.fit(reference)
 
     # Constants, standardizing the percentiles,
     C0 = 2.515517
@@ -198,12 +196,29 @@ def calc_SPEI(ds, ds_hist, window):
     d3 = 0.001308
     # Calculate the rolling sum of the investigated runoff.
     D = ds.rolling(time=window).sum().dropna(dim='time')
-    # Calc P, use the cdf, paper is wrong saying the pdf.
-    P = 1 - fisk.cdf(D, *fit)
-    # Calc W for P <= 0.5 and P>0.5.
-    W = np.where(P < 0.5, np.sqrt(-2 * np.log(P)),
-                 -np.sqrt(-2 * np.log(1 - P)))
-    # Calc SPEI
-    SPEI = W - (C0 + C1 * W + C2 * W**2) / (1 + d1 * W + d2 * W**2 + d3 * W**3)
+    if parametric:
+        # Fit the fisk distribution.
+        fit = fisk.fit(reference)
+        # Calc P, use the cdf, paper is wrong saying the pdf.
+        P = 1 - fisk.cdf(D, *fit)
+        # Calc W for P <= 0.5 and P>0.5.
+        W = np.where(P < 0.5, np.sqrt(-2 * np.log(P)),
+                     -np.sqrt(-2 * np.log(1 - P)))
+        # Calc SPEI
+        SPEI = W - (C0 + C1 * W + C2 * W**2) /\
+            (1 + d1 * W + d2 * W**2 + d3 * W**3)
+    # Non-parametric
+    else:
+        # Get the rank
+        rank = D.rank(dim='time')
+        # Empirical probability
+        P = (rank - 0.44) / (len(rank) + 0.12)
+        # Standardize it
+        W = np.where(P <= 0.5, -np.sqrt(np.log(1 / P**2)),
+                     np.sqrt(1 / np.log(1 / (1 - P)**2)))
+        # Calc SPEI
+        SPEI = W - (C0 + C1 * W + C2 * W**2) /\
+            (1 + d1 * W + d2 * W**2 + d3 * W**3)
+    # Put into dataframe
     SPEI = xr.DataArray(SPEI, dims=['time'], coords={'time': D.time})
     return SPEI
