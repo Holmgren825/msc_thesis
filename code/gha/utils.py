@@ -326,9 +326,9 @@ def process_basins(basins, rcps, data_dir=None):
     # Map with the mp pool
     with ProcessPool() as p:
         p.map(processing, basins_prod, rcps_prod)
-        # Have to close the pool.
-        p.close()
-        p.join()
+    # Have to close the pool.
+    p.close()
+    p.join()
 
 
 def init_data_dir(data_dir):

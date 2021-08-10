@@ -3,6 +3,7 @@ import xarray as xr
 import os
 from oggm import utils, cfg, workflow
 import gha
+import gha.utils
 
 
 def glacier_simulations(basin, rcps, restart=False, test=False):
@@ -11,7 +12,8 @@ def glacier_simulations(basin, rcps, restart=False, test=False):
     Args:
     -----
     basin: str
-        String of the basin MBRID. I.e. '3209'.
+        String of the basin MBRID. I.e. '3209'. To simulate glaciers in
+        all the basins simply pass 'all'.
     rcps: list(strings)
         List of strings decalring the rcp scenarios to run.
     restart: bool
@@ -26,13 +28,13 @@ def glacier_simulations(basin, rcps, restart=False, test=False):
     if test:
         rgiids = rgiids[:2]
 
-    # OGGM init.
-    cfg.initialize(logging_level='WARNING')
-    cfg.PARAMS['continue_on_error'] = True
-    cfg.PARAMS['use_multiprocessing'] = True
-    cfg.PARAMS['border'] = 80
-    # Set the path where to save tha data.
-    cfg.PATHS['working_dir'] = '/home/erik/data/oggm_output/'
+    # # OGGM init.
+    # cfg.initialize(logging_level='WARNING')
+    # cfg.PARAMS['continue_on_error'] = True
+    # cfg.PARAMS['use_multiprocessing'] = True
+    # cfg.PARAMS['border'] = 80
+    # # Set the path where to save tha data.
+    # cfg.PATHS['working_dir'] = '/home/erik/data/oggm_output/'
 
     # If we want to restart, wipe everything and simulate glaciers again.
     if restart:
