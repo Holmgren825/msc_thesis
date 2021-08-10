@@ -7,6 +7,7 @@
 #SBATCH --mail-user=erik.holmgren@student.uibk.ac.at
 #SBATCH --mail-type=ALL
 #SBATCH --qos=low
+#SBATCH --output=/home/users/eholmgren/work/logs/slurm_%j.out
 
 # We should abort if a single step fails.
 set -e
@@ -32,7 +33,7 @@ echo "Output dir for this run: $OGGM_OUTDIR"
 
 # All commands in the EOF block run inside of the container
 # Adjust container version to your needs, they are guaranteed to never change after their respective day has passed.
-srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/eholmgren/images/oggm_20210704.sif bash -s <<EOF
+srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/eholmgren/images/oggm_20210810.sif bash -s <<EOF
   set -e
   # Setup a fake home dir inside of our workdir, so we don't clutter the actual shared homedir with potentially incompatible stuff.
   export HOME="$OGGM_WORKDIR/fake_home"
@@ -54,4 +55,4 @@ EOF
 
 # Write out
 echo "Copying files..."
-rsync -avzh "$OGGM_OUTDIR/" gha_basins
+rsync -avzh "$OGGM_OUTDIR/" /home/users/eholmgren/work/gha_basins
