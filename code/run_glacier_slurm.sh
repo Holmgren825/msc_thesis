@@ -32,7 +32,7 @@ echo "Output dir for this run: $OGGM_OUTDIR"
 
 # All commands in the EOF block run inside of the container
 # Adjust container version to your needs, they are guaranteed to never change after their respective day has passed.
-srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/fmaussion/images/oggm_20201115.sif bash -s <<EOF
+srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/eholmgren/images/oggm_20210704.sif bash -s <<EOF
   set -e
   # Setup a fake home dir inside of our workdir, so we don't clutter the actual shared homedir with potentially incompatible stuff.
   export HOME="$OGGM_WORKDIR/fake_home"
@@ -45,6 +45,7 @@ srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/fmaussion
   pip install --upgrade pip setuptools
   # OPTIONAL: install OGGM latest
   pip install --no-deps "git+https://github.com/OGGM/oggm.git@v1.5.0"
+  pip install pathos
   # Increase number of allowed open file descriptors
   ulimit -n 65000
   # Finally, the run
