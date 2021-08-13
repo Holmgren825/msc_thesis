@@ -41,7 +41,7 @@ gdf = gpd.read_file('./data/glacier_basins.shp')
 for basin_idx in sys.argv[1:]:
     # Get the basin and the MRBID.
     basin = gdf.iloc[[basin_idx]]
-    mrbid = str(basin.iloc[[0]].MRBID)
+    mrbid = str(basin.iloc[0].MRBID)
     # log
     log.workflow(f'Starting run for {mrbid}')
     # Glacier run
