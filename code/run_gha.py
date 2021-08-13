@@ -8,6 +8,10 @@ import oggm.utils as utils
 
 # gha
 from gha.glacier import glacier_simulations, compile_basin_output
+from gha.utils import process_basins
+from gha.hydro import get_discharge_df
+
+import geopandas as gpd
 
 # OGGM init.
 cfg.initialize(logging_level='WARNING')
@@ -32,8 +36,12 @@ utils.mkdir(OUTPUT_DIR)
 log = logging.getLogger(__name__)
 log.workflow('Starting run for basins')
 
-# Run the glacier simulations
-for mrbid in sys.argv[1:]:
+gdf = gpd.read_file('./data/glacier_basins.shp')
+# Run the glacier simulations and basin processing.
+for basin_idx in sys.argv[1:]:
+    # Get the basin and the MRBID.
+    basin = gdf.iloc[[basin_idx]]
+    mrbid = str(basin.iloc[[0]].MRIBD)
     # log
     log.workflow(f'Starting run for {mrbid}')
     # Glacier run
@@ -43,6 +51,10 @@ for mrbid in sys.argv[1:]:
     # Compile the basin glaciers.
     for rcp in rcps:
         compile_basin_output(mrbid, rcp, OUTPUT_DIR)
+    log.workflow('OGGM done')
+    log.workflow('Begin basin climate processing')
+    # Process the basin climate data.
+    process_basins(basin, rcps, OUTPUT_DIR)
+    log.workflow('Climate processing done')
 
-log.workflow('OGGM done')
-# Maybe add the basin processing here. Or keep it in separate steps?
+log.workflow('Basin completed')
