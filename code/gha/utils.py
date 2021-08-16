@@ -7,6 +7,7 @@ from oggm import utils, workflow, tasks, cfg
 from oggm.shop import gcm_climate
 import zipfile
 import tempfile
+import itertools
 import os
 import json
 from gha import hydro
@@ -308,7 +309,7 @@ def process_basin(basin, rcps, data_dir=None):
     # Loop climate processing over the rcps scenarios.
     for rcp in rcps:
         # Create the basin dir
-        bid = str(basin.MRBID)
+        bid = str(basin.iloc[0].MRBID)
         basin_dir = mkdir(data_dir, bid)
         # Get the data
         _, ds_selection = process_clim_data(basin, rcp)

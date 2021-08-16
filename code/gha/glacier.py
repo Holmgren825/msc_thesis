@@ -1,7 +1,7 @@
 '''Module for hydro calculations.'''
 import xarray as xr
 import os
-from oggm import utils, cfg, workflow
+from oggm import utils, workflow
 import gha
 import gha.utils
 
