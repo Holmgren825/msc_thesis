@@ -8,7 +8,7 @@ import oggm.utils as utils
 
 # gha
 from gha.glacier import glacier_simulations, compile_basin_output
-from gha.utils import process_basins
+from gha.utils import process_basin
 from gha.hydro import get_discharge_df
 
 import geopandas as gpd
@@ -54,7 +54,7 @@ for basin_idx in sys.argv[1:]:
     log.workflow('OGGM done')
     log.workflow('Begin basin climate processing')
     # Process the basin climate data.
-    process_basins(basin, rcps, OUTPUT_DIR)
+    process_basin(basin, rcps, OUTPUT_DIR)
     log.workflow('Climate processing done')
 
 log.workflow('Basin completed')

@@ -8,8 +8,6 @@ from oggm.shop import gcm_climate
 import zipfile
 import tempfile
 import os
-from pathos.multiprocessing import ProcessPool
-import itertools
 import json
 from gha import hydro
 
@@ -120,6 +118,8 @@ def process_clim_data(basin, rcp):
         data for the given basin and rcp scenario.
     '''
 
+    # Extract the pandas series.
+    basin = basin.iloc[0]
     # Get the projection data for the scenarios
     ft, fp = download_proj_data(rcp)
     # And get the climate data
@@ -286,16 +286,16 @@ def run_hydro_projections(gdirs, rcps):
                             )
 
 
-def process_basins(basins, rcps, data_dir=None):
-    '''Process the climate data for one or more basin(s). Takes a list of basins
+def process_basin(basin, rcps, data_dir=None):
+    '''Process the climate data for one basin. Takes a basin
     (geoseries) and downloads projection data, selects the region of interest
-    and downscales it for each. Saves the basin to disk. If data_dir is not
-    provided, data is saved to a temporary folder.
+    and downscales it for the specified rcp scenarios. Saves the basin to disk.
+    If data_dir is not provided, data is saved to a temporary folder.
 
     Args:
     -----
-    basins: geopandas dataframe
-        Dataframe with basin spatial data. One or more basins.
+    basin: geopandas dataframe
+        Dataframe with basin spatial data.
     rcps: list
         List of strings with rcp scenarios.
     data_dir: str
@@ -304,31 +304,19 @@ def process_basins(basins, rcps, data_dir=None):
 
     # Where are we saving the data?
     data_dir = init_data_dir(data_dir)
-    # After we checked the path we can begin processing the basins. Want to use
-    # multi processing to speed things up.
-
-    # Subfunction for multiprocessing.
-    def processing(basin, rcp, data_dir=data_dir):
+    # After we checked the path we can begin processing the basins.
+    # Loop climate processing over the rcps scenarios.
+    for rcp in rcps:
         # Create the basin dir
         bid = str(basin.MRBID)
         basin_dir = mkdir(data_dir, bid)
         # Get the data
         _, ds_selection = process_clim_data(basin, rcp)
-        # Calc PET. This is insreting PET into the dataset.
+        # Calc PET. This is inserting PET into the dataset.
         ds_selection = hydro.calc_PET(ds_selection)
         # Save it to file.
         path = os.path.join(basin_dir, f'{bid}_{rcp}.nc')
         ds_selection.to_netcdf(path=path)
-
-    # Create all the combinations that should be processed.
-    iter_prod = list(itertools.product(basins.itertuples(), rcps))
-    basins_prod, rcps_prod = zip(*iter_prod)
-    # Map with the mp pool
-    with ProcessPool() as p:
-        p.map(processing, basins_prod, rcps_prod)
-    # Have to close the pool.
-    p.close()
-    p.join()
 
 
 def init_data_dir(data_dir):
