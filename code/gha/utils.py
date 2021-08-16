@@ -11,6 +11,7 @@ import itertools
 import os
 import json
 from gha import hydro
+from gha.hydro import basin_hydro_analysis
 
 
 def download_proj_data(rcp):
@@ -287,7 +288,7 @@ def run_hydro_projections(gdirs, rcps):
                             )
 
 
-def process_basin(basin, rcps, data_dir=None):
+def process_basin(basin, rcps, data_dir=None, parametric=False, window=15):
     '''Process the climate data for one basin. Takes a basin
     (geoseries) and downloads projection data, selects the region of interest
     and downscales it for the specified rcp scenarios. Saves the basin to disk.
@@ -301,16 +302,21 @@ def process_basin(basin, rcps, data_dir=None):
         List of strings with rcp scenarios.
     data_dir: str
         Path to where to store the data. Provide an absolute path.
+    parametric: bool
+        Calculate paramteric SPEI or not. Default is  False.
+    window: int
+        Size of the window used for calculating SPEI. Default is 15.
     '''
 
     # Where are we saving the data?
     data_dir = init_data_dir(data_dir)
     # After we checked the path we can begin processing the basins.
     # Loop climate processing over the rcps scenarios.
+    # Create the basin dir
+    bid = str(basin.iloc[0].MRBID)
+    basin_dir = mkdir(data_dir, bid)
+    # Loop the scenarios.
     for rcp in rcps:
-        # Create the basin dir
-        bid = str(basin.iloc[0].MRBID)
-        basin_dir = mkdir(data_dir, bid)
         # Get the data
         _, ds_selection = process_clim_data(basin, rcp)
         # Calc PET. This is inserting PET into the dataset.
@@ -318,6 +324,11 @@ def process_basin(basin, rcps, data_dir=None):
         # Save it to file.
         path = os.path.join(basin_dir, f'{bid}_{rcp}.nc')
         ds_selection.to_netcdf(path=path)
+        # Hydro analysis.
+        # This opens the glacier run-off file and the climate projection data
+        # and compiles it to the discharge dataframes. After this the SPEI
+        # dataframe is created and and saved to disk.
+        basin_hydro_analysis(basin, rcp, window, parametric, data_dir)
 
 
 def init_data_dir(data_dir):

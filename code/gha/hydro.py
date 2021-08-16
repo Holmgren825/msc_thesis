@@ -222,3 +222,43 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
     # Put into dataframe
     SPEI = xr.DataArray(SPEI, dims=['time'], coords={'time': D.time})
     return SPEI
+
+
+def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
+    '''Function to do the complete hydro analysis of a basin for the given rcp
+    scenario. Requires the glacier runoff and basin climate data to be
+    available in the data dir. Saves the dataframes to disk.
+
+    Args:
+    -----
+    basin: geopandas dataframe
+        Dataseries of the basin. Should contain the geometry.
+    rcp: str
+         String declaring the rcp scenario to process.
+    window: int
+        Window size for SPEI.
+    parametric: bool
+        Use paramtric SPEI?
+    data_dir: str
+        Path of the data directory.
+
+    '''
+
+    # Get the discharge df
+    hydro_proj_ds, hydro_ds = get_discharge_df(basin, data_dir, rcp)
+    # Extract the mrbid and get the basin dir.
+    mrbid = str(basin.iloc[0].MRBID)
+    basin_dir = os.path.join(data_dir, mrbid)
+    # Save the hydro dataframe.
+    path = os.path.join(basin_dir, f'{mrbid}_discharge_proj_{rcp}.nc')
+    hydro_proj_ds.to_netcdf(path=path)
+    # Historic
+    path = os.path.join(basin_dir, f'{mrbid}_discharge_hist_{rcp}.nc')
+    hydro_ds.to_netcdf(path=path)
+
+    # Get the SPEI
+    hist = hydro_ds.sel(time=slice('1960', '2010'))
+    SPEI = calc_SPEI(hydro_proj_ds.D, hist.D, window, parametric)
+    # Save this as well.
+    path = os.path.join(basin_dir, f'{mrbid}_SPEI_{parametric}_{rcp}.nc')
+    SPEI.to_netcdf(path=path)
