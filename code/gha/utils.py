@@ -328,12 +328,7 @@ def process_basin(basin, rcps, data_dir=None, parametric=False, window=15):
         # This opens the glacier run-off file and the climate projection data
         # and compiles it to the discharge dataframes. After this the SPEI
         # dataframe is created and and saved to disk.
-
-        # To get around the missing bottleneck dependecy.
-        # If it is a slurm job, we don't do the last step of the analysis.
-        slurm = os.environ.get('SLURM_JOBID', '')
-        if not slurm:
-            basin_hydro_analysis(basin, rcp, window, parametric, data_dir)
+        basin_hydro_analysis(basin, rcp, window, parametric, data_dir)
 
 
 def init_data_dir(data_dir):
