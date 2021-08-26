@@ -259,6 +259,18 @@ def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
     # Get the SPEI
     hist = hydro_ds.sel(time=slice('1960', '2010'))
     SPEI = calc_SPEI(hydro_proj_ds.D, hist.D, window, parametric)
+    # And the adjusted SPEI
+    SPEI_adj = calc_SPEI(hydro_proj_ds.D_adj, hist.D, window, parametric)
+    # Create the SPEI dataset.
+    SPEI_ds = xr.Dataset({'SPEI': SPEI, 'SPEI_adj': SPEI_adj})
+    # Add some attributes
+    SPEI_ds.SPEI.attrs = {'unit': 'mm month-1'}
+    SPEI_ds.SPEI_adj.attrs = {'unit': 'mm month-1'}
+    SPEI_ds.SPEI.attrs = {'description':
+                          'SPEI calculated without glacier runoff.'}
+    SPEI_ds.SPEI_adj.attrs = {'description':
+                              'SPEI calculated with glacier runoff.'}
+
     # Save this as well.
     path = os.path.join(basin_dir, f'{mrbid}_SPEI_{parametric}_{rcp}.nc')
-    SPEI.to_netcdf(path=path)
+    SPEI_ds.to_netcdf(path=path)

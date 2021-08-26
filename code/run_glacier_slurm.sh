@@ -46,7 +46,6 @@ srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/eholmgren
   pip install --upgrade pip setuptools
   # OPTIONAL: install OGGM latest
   pip install --no-deps "git+https://github.com/OGGM/oggm.git@v1.5.0"
-  pip install pathos
   # Increase number of allowed open file descriptors
   ulimit -n 65000
   # Finally, the run
