@@ -72,8 +72,13 @@ def main():
     parser.add_argument('--window',
                         help='Size of the window to accumulate moisture.',
                         type=int)
-    parser.add_argument('--parametric', help='Parametric SPEI or not',
-                        type=bool)
+    parser.add_argument('--parametric', dest='parametric',
+                        help='Parametric SPEI',
+                        action='store_true')
+    parser.add_argument('--non-parametric', dest='parametric',
+                        help='Non parametric SPEI',
+                        action='store_false')
+    parser.set_defaults(parametric=False)
     args = parser.parse_args()
 
     get_spei_files(base_path=args.path, window=args.window,
