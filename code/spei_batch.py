@@ -26,11 +26,13 @@ def get_spei_files(base_path, window=15, parametric=False):
     for mrbid in basins_df.MRBID:
         # Set it to a string.
         mrbid = str(mrbid)
+        print(f'Basin {mrbid}')
         # Base path to file.
         # This is where the data is stored.
         basin_path = os.path.join(base_path, mrbid)
 
         for rcp in rcps:
+            print(f'Rcp {rcp}')
             # Filenames
             hist_file = f'{mrbid}_discharge_hist_{rcp}.nc'
             proj_file = f'{mrbid}_discharge_proj_{rcp}.nc'
@@ -74,7 +76,8 @@ def main():
                         type=bool)
     args = parser.parse_args()
 
-    get_spei_files(args.base_path, args.window, args.parametric)
+    get_spei_files(base_path=args.path, window=args.window,
+                   parametric=args.parametric)
 
 
 if __name__ == '__main__':
