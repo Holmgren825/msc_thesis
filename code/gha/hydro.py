@@ -141,12 +141,13 @@ def get_discharge_df(basin, data_dir, rcp):
         hydro_proj_ds.prcp_adj.attrs = {'unit': 'mm month-1'}
 
         # And finally calculate the moisture availability
-        D = hydro_proj_ds['prcp'] - hydro_proj_ds['PET']
+        D = hydro_proj_ds['prcp'] - hydro_proj_ds['PET'].fillna(0)
         hydro_proj_ds = hydro_proj_ds.assign(D=D)
         hydro_proj_ds.D.attrs = {'unit': 'mm month-1'}
         # Adjusted
         D_adj = hydro_proj_ds['prcp_adj']\
-            + hydro_proj_ds['glacier_runoff_adj'] - hydro_proj_ds['PET']
+            + hydro_proj_ds['glacier_runoff_adj']\
+            - hydro_proj_ds['PET'].fillna(0)
         hydro_proj_ds = hydro_proj_ds.assign(D_adj=D_adj)
         hydro_proj_ds.D_adj.attrs = {'unit': 'mm month-1'}
         # Reference
