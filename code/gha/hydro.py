@@ -55,9 +55,10 @@ def calc_PET(ds):
     PET_u = PET_u.groupby('time.year') ** m
     PET_u = PET_u * 10
 
+    # We have to clean some infinite values.
+    PET_u = xr.where(xr.ufuncs.isinf(PET_u), np.nan, PET_u)
     # Add the corrected PET to the dataset.
     ds['PET'] = PET_u * 16 * K
-    ds['PET'] = ds['PET'].fillna(0)
 
     ds.PET.attrs = {'unit': 'mm month-1'}
     return ds
