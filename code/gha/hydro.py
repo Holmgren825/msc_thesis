@@ -151,7 +151,8 @@ def get_discharge_df(basin, data_dir, rcp):
         hydro_proj_ds = hydro_proj_ds.assign(D_adj=D_adj)
         hydro_proj_ds.D_adj.attrs = {'unit': 'mm month-1'}
         # Reference
-        D = hydro_ds['prcp'] - hydro_ds['PET']
+        # Again, we have to
+        D = hydro_ds['prcp'] - hydro_ds['PET'].fillna(0)
         hydro_ds = hydro_ds.assign(D=D)
         hydro_ds.D.attrs = {'unit': 'mm month-1'}
 
@@ -181,13 +182,13 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
         Containing the reference period. Discharge.
     window: int
         Size of the window (months) for the accumulated moisture.
+    parametric: bool
+        Decides the use of parametric SPEI or not.
 
     Returns:
     --------
     SPEI: xarray dataArray
     '''
-    # Start with calculating the rolling sum of desired length.
-    reference = ds_hist.rolling(time=window).sum().dropna(dim='time')
 
     # Constants, standardizing the percentiles,
     C0 = 2.515517
@@ -196,9 +197,12 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
     d1 = 1.432788
     d2 = 0.1819269
     d3 = 0.001308
-    # Calculate the rolling sum of the investigated runoff.
-    D = ds.rolling(time=window).sum().dropna(dim='time')
+    # Parametric
     if parametric:
+        # Start with calculating the rolling sum of desired length.
+        reference = ds_hist.rolling(time=window).sum().dropna(dim='time')
+        # Calculate the rolling sum of the investigated runoff.
+        D = ds.rolling(time=window).sum().dropna(dim='time')
         # Fit the fisk distribution.
         fit = fisk.fit(reference)
         # Calc P, use the cdf, paper is wrong saying the pdf.
@@ -211,9 +215,13 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
             (1 + d1 * W + d2 * W**2 + d3 * W**3)
     # Non-parametric
     else:
+        # Concat the projection data to the reference data.
+        D = xr.concat([ds_hist, ds], dim='time')
+        # Get the rolling sum.
+        D = D.rolling(time=window).sum().dropna(dim='time')
         # Get the rank
         rank = D.rank(dim='time')
-        # Empirical probability
+        # Calculate the empirical probability
         P = (rank - 0.44) / (len(rank) + 0.12)
         # Standardize it
         W = np.where(P <= 0.5, -np.sqrt(np.log(1 / P**2)),
