@@ -170,7 +170,7 @@ def get_adjusted_precipitation(ds, basin_area, glaciated_area):
     return prcp_adj
 
 
-def calc_SPEI(ds, ds_hist, window, parametric=True):
+def calc_SPEI(ds, ds_hist=None, window=15, parametric=True):
     '''Calculate SPEI for the given dataset.
 
     Args:
@@ -179,7 +179,9 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
        Containing data (moisture) from which to do the SPEI calculation.
        D (prcp - PET) is needed.
     ds_hist: xarray dataset
-        Containing the reference period. Discharge.
+        Containing the reference period discharge. Defaults to None,
+        if supplied its used as a longer reference period. Required for
+        parametric SPEI.
     window: int
         Size of the window (months) for the accumulated moisture.
     parametric: bool
@@ -199,6 +201,9 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
     d3 = 0.001308
     # Parametric
     if parametric:
+        # Check if we have reference data.
+        if ds_hist is None:
+            raise ValueError('Reference data is needed for parametric SPEI.')
         # Start with calculating the rolling sum of desired length.
         reference = ds_hist.rolling(time=window).sum().dropna(dim='time')
         # Calculate the rolling sum of the investigated runoff.
@@ -207,28 +212,37 @@ def calc_SPEI(ds, ds_hist, window, parametric=True):
         fit = fisk.fit(reference)
         # Calc P, use the cdf, paper is wrong saying the pdf.
         P = 1 - fisk.cdf(D, *fit)
-        # Calc W for P <= 0.5 and P>0.5.
-        W = np.where(P < 0.5, np.sqrt(-2 * np.log(P)),
-                     -np.sqrt(-2 * np.log(1 - P)))
+        # Calc W (or t) for P <= 0.5 and P > 0.5
+        W = np.where(P <= 0.5, np.sqrt(np.log(1 / P**2)),
+                     np.sqrt(np.log(1 / (1 - P)**2)))
         # Calc SPEI
         SPEI = W - (C0 + C1 * W + C2 * W**2) /\
             (1 + d1 * W + d2 * W**2 + d3 * W**3)
+        SPEI = np.where(P <= 0.5, -SPEI, SPEI)
+
     # Non-parametric
     else:
-        # Concat the projection data to the reference data.
-        D = xr.concat([ds_hist, ds], dim='time')
+        # If a reference dataset is passed along, use it.
+        if ds_hist is not None:
+            # Concat the projection data to the reference data.
+            D = xr.concat([ds_hist, ds], dim='time')
+        # Otherwise don't.
+        else:
+            ds = D
         # Get the rolling sum.
         D = D.rolling(time=window).sum().dropna(dim='time')
         # Get the rank
         rank = D.rank(dim='time')
         # Calculate the empirical probability
         P = (rank - 0.44) / (len(rank) + 0.12)
-        # Standardize it
-        W = np.where(P <= 0.5, -np.sqrt(np.log(1 / P**2)),
-                     np.sqrt(1 / np.log(1 / (1 - P)**2)))
+        # Calc W (or t) for P <= 0.5 and P > 0.5
+        W = np.where(P <= 0.5, np.sqrt(np.log(1 / P**2)),
+                     np.sqrt(np.log(1 / (1 - P)**2)))
         # Calc SPEI
         SPEI = W - (C0 + C1 * W + C2 * W**2) /\
             (1 + d1 * W + d2 * W**2 + d3 * W**3)
+        SPEI = np.where(P <= 0.5, -SPEI, SPEI)
+
     # Put into dataframe
     SPEI = xr.DataArray(SPEI, dims=['time'], coords={'time': D.time})
     return SPEI
@@ -272,7 +286,7 @@ def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
     # i.e. SPEI calc.
     slurm = os.environ.get('SLURM_JOBID', '')
     if not slurm:
-        hist = hydro_ds.sel(time=slice('1960', '2010'))
+        hist = hydro_ds.sel(time=slice('1918', '2018'))
         SPEI = calc_SPEI(hydro_proj_ds.D, hist.D, window, parametric)
         # And the adjusted SPEI
         SPEI_adj = calc_SPEI(hydro_proj_ds.D_adj, hist.D, window, parametric)
