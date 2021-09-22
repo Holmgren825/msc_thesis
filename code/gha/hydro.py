@@ -3,6 +3,7 @@ import numpy as np
 import os
 import xarray as xr
 from scipy.stats import fisk
+from oggm import cfg
 
 
 def calc_PET(ds):
@@ -77,6 +78,11 @@ def get_discharge_df(basin, data_dir, rcp):
     rcp: str
          String declaring the rcp scenario to process.
     '''
+    # we need the cfg for prcp fac.
+    cfg.initialize_minimal()
+    # Prcp fac
+    prcp_fac = cfg.PARAMS['prcp_scaling_factor']
+    # Mrbid stuff.
     bid = str(basin.iloc[0].MRBID)
     basin_dir = os.path.join(data_dir, bid)
     # Paths for the files. Leave the naming structure hard coded for now.
@@ -106,10 +112,19 @@ def get_discharge_df(basin, data_dir, rcp):
                           ds_roll['melt_on_glacier_monthly'] +
                           ds_roll['liq_prcp_off_glacier_monthly'] +
                           ds_roll['liq_prcp_on_glacier_monthly'])
+        # Monthly runoff with removed prcp factor.
+        monthly_runoff_nofac = (ds_roll['melt_off_glacier_monthly'] +
+                                ds_roll['melt_on_glacier_monthly'] +
+                                (ds_roll['liq_prcp_off_glacier_monthly']
+                                 / prcp_fac) +
+                                (ds_roll['liq_prcp_on_glacier_monthly']
+                                 / prcp_fac))
         # Convert to kg m^-2
         monthly_runoff = monthly_runoff / glaciated_area
+        monthly_runoff_nofac = monthly_runoff_nofac / glaciated_area
         # Clip runoff to 0
         monthly_runoff = monthly_runoff.clip(0)
+        monthly_runoff_nofac = monthly_runoff_nofac.clip(0)
 
         # Get the total precipitation and PET
         hydro_ds = ds_proj[['prcp', 'PET']].mean(dim=['lat', 'lon'],
@@ -118,20 +133,34 @@ def get_discharge_df(basin, data_dir, rcp):
         hydro_proj_ds = hydro_ds.sel(time=slice('2019', '2100'))
         # We add the glacier projections to this dataset.
         time = hydro_proj_ds.time
+        # With prcp factor.
         runoff = xr.DataArray(monthly_runoff.values.flatten(),
                               dims=['time'],
                               coords={'time': time})
         hydro_proj_ds = hydro_proj_ds.assign(glacier_runoff=runoff)
+        # Without prcp factor.
+        runoff_nofac = xr.DataArray(monthly_runoff_nofac.values.flatten(),
+                                    dims=['time'],
+                                    coords={'time': time})
+        hydro_proj_ds = hydro_proj_ds.assign(glacier_runoff_nofac=runoff_nofac)
         # Attributes
         hydro_proj_ds.glacier_runoff.attrs = {'unit': 'mm month-1'}
+        hydro_proj_ds.glacier_runoff_nofac.attrs = {'unit': 'mm month-1'}
         # Area adjustments for precipitation and glacier runoff
         glacier_runoff_adj = hydro_proj_ds['glacier_runoff'] *\
             (glaciated_area / basin_area)
         hydro_proj_ds = hydro_proj_ds.assign(
             glacier_runoff_adj=glacier_runoff_adj
         )
+        # Area adjustments for runoff without prcp fac.
+        glacier_runoff_adj_nofac = hydro_proj_ds['glacier_runoff_nofac'] *\
+            (glaciated_area / basin_area)
+        hydro_proj_ds = hydro_proj_ds.assign(
+            glacier_runoff_adj_nofac=glacier_runoff_adj_nofac
+        )
         # Attributes
         hydro_proj_ds.glacier_runoff_adj.attrs = {'unit': 'mm month-1'}
+        hydro_proj_ds.glacier_runoff_adj_nofac.attrs = {'unit': 'mm month-1'}
 
         # Adjusted precipitation
         prcp_adj = get_adjusted_precipitation(hydro_proj_ds,
@@ -150,6 +179,12 @@ def get_discharge_df(basin, data_dir, rcp):
             - hydro_proj_ds['PET'].fillna(0)
         hydro_proj_ds = hydro_proj_ds.assign(D_adj=D_adj)
         hydro_proj_ds.D_adj.attrs = {'unit': 'mm month-1'}
+        # Adjusted without factor
+        D_adj_nofac = hydro_proj_ds['prcp_adj']\
+            + hydro_proj_ds['glacier_runoff_adj_nofac']\
+            - hydro_proj_ds['PET'].fillna(0)
+        hydro_proj_ds = hydro_proj_ds.assign(D_adj_nofac=D_adj_nofac)
+        hydro_proj_ds.D_adj_nofac.attrs = {'unit': 'mm month-1'}
         # Reference
         # Again, we have to
         D = hydro_ds['prcp'] - hydro_ds['PET'].fillna(0)
