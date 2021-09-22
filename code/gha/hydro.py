@@ -326,10 +326,11 @@ def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
         # And the adjusted SPEI
         SPEI_adj = calc_SPEI(hydro_proj_ds.D_adj, hist.D, window, parametric)
         # And the adjusted, no factor, SPEI
-        SPEI_adj = calc_SPEI(hydro_proj_ds.D_adj_nofac, hist.D, window,
-                             parametric)
+        SPEI_adj_nofac = calc_SPEI(hydro_proj_ds.D_adj_nofac, hist.D, window,
+                                   parametric)
         # Create the SPEI dataset.
-        SPEI_ds = xr.Dataset({'SPEI': SPEI, 'SPEI_adj': SPEI_adj})
+        SPEI_ds = xr.Dataset({'SPEI': SPEI, 'SPEI_adj': SPEI_adj,
+                              'SPEI_adj_nofac': SPEI_adj_nofac})
         # Add some attributes
         SPEI_ds.SPEI.attrs = {'unit': 'mm month-1'}
         SPEI_ds.SPEI_adj.attrs = {'unit': 'mm month-1'}
