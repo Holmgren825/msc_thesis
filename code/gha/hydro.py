@@ -133,7 +133,7 @@ def get_discharge_df(basin, data_dir, gcm, ssp):
         hydro_ds = ds_proj[['prcp', 'PET']].mean(dim=['lat', 'lon'],
                                                  keep_attrs=True)
         # Projection hydro subset
-        hydro_proj_ds = hydro_ds.sel(time=slice('2019', '2100'))
+        hydro_proj_ds = hydro_ds.sel(time=slice('2020', '2100'))
         # We add the glacier projections to this dataset.
         time = hydro_proj_ds.time
         # With prcp factor.
