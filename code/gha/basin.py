@@ -181,4 +181,5 @@ def process_basin(basin, gcm, ssps, data_dir=None,
         # This opens the glacier run-off file and the climate projection data
         # and compiles it to the discharge dataframes. After this the SPEI
         # dataframe is created and and saved to disk.
-        hydro.basin_hydro_analysis(basin, ssp, window, parametric, data_dir)
+        hydro.basin_hydro_analysis(basin, gcm, ssp, window,
+                                   parametric, data_dir)
