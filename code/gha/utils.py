@@ -12,7 +12,6 @@ import os
 import json
 from gha import hydro
 from gha.hydro import basin_hydro_analysis
-import gha.utils
 
 
 def download_proj_data(rcp):
@@ -336,8 +335,8 @@ def run_hydro_projections(gdirs, gcm, ssps, data_dir, basin):
                             )
 
         # Where do we store the data?
-        data_dir = gha.utils.init_data_dir(data_dir)
-        basin_dir = gha.utils.mkdir(data_dir, basin)
+        data_dir = init_data_dir(data_dir)
+        basin_dir = mkdir(data_dir, basin)
         # File suffixes
         output_suffix = f'oggm_compiled_{basin}_{rid}.nc'
         # If we do a custom path, we have to supply the whole path to OGGM.
