@@ -169,7 +169,7 @@ def process_basin(basin, gcm, ssps, data_dir=None,
     # Loop the scenarios.
     for ssp in ssps:
         # Get the rid
-        rid, _, _ = get_cmip6_data(gcm,)
+        rid, _, _ = get_cmip6_data(gcm, ssp)
         # Get the data
         _, ds_selection = process_clim_data(basin, gcm, ssp)
         # Calc PET. This is inserting PET into the dataset.
