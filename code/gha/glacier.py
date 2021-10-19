@@ -96,7 +96,7 @@ def run_hydro_projections(gdirs, gcm, ssps, data_dir, basin):
                              # Use gcm_data
                              climate_filename='gcm_data',
                              # Use the scenario
-                             climate_input_filesuffix=rid,
+                             climate_input_filesuffix='_' + rid,
                              # When to start?
                              init_model_filesuffix='_historical',
                              # Good naming for recognizing later

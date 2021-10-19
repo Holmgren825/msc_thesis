@@ -47,7 +47,7 @@ for basin_idx, gcm_idx in zip(sys.argv[1], sys.argv[2]):
     basin = gdf.iloc[[basin_idx]]
     mrbid = str(basin.iloc[0].MRBID)
     # Get the gcm
-    gcm = gcm_df.loc[gcm_df.gcm == gcm_df.gcm.unique()[gcm_idx]]
+    gcm = gcm_df.loc[gcm_df.gcm == gcm_df.gcm.unique()[int(gcm_idx)]]
     # ssp scenarios we want to run.
     # These are the ssp scenarios we want to do, but not all gcm have them.
     # So have to check what it has.
