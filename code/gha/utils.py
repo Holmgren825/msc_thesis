@@ -12,6 +12,7 @@ import os
 import json
 from gha import hydro
 from gha.hydro import basin_hydro_analysis
+import gha.utils
 
 
 def download_proj_data(rcp):
@@ -42,6 +43,43 @@ def download_proj_data(rcp):
     fp = utils.file_downloader(bp.format(rcp))
 
     return ft, fp
+
+
+def get_cmip6_data(gcm, ssp):
+    '''
+    Helper function to return filepaths of temperature and precipitation for
+    the gcm, located on the cluster. Also gives back the rid. This does not
+    download anyting. Files need to be available.
+
+    Args:
+    -----
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
+    ssp: string
+        Specifies the ssp scenario.
+
+    Returns:
+    --------
+    rid: string
+        Gcm file identifier.
+    ft: string
+        Path to the temperature dataset on the cluster.
+    fp: string
+        Path to the precipitation dataset on the cluster.
+    '''
+
+    # Select the entires relevant for our ssp.
+    gcm_ssp = gcm.loc[gcm.ssp == ssp]
+    # Temperature entry
+    ft = gcm_ssp.loc[gcm_ssp['var'] == 'tas'].iloc[0]
+    # Precipitation path.
+    fp = gcm_ssp.loc[gcm_ssp['var'] == 'pr'].iloc[0].path
+    # rid
+    rid = ft.fname.replace('_r1i1p1f1_tas.nc', '')
+    # Temp. path
+    ft = ft.path
+
+    return rid, ft, fp
 
 
 def download_clim_data():
@@ -101,15 +139,17 @@ def select_basin_data(df, basin):
     return df_sel
 
 
-def process_clim_data(basin, rcp):
+def process_clim_data(basin, gcm, ssp):
     '''Downscales climate projection data to the basin for a rcp scenario.
 
     Args:
     -----
     basin: geopandas series
         Geopandas series of the basin.
-    rcp: string
-        String decaling the rcp scenario.
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
+    ssp: string
+        String decaling the ssp scenario.
 
     Returns:
     --------
@@ -123,7 +163,7 @@ def process_clim_data(basin, rcp):
     # Extract the pandas series.
     basin = basin.iloc[0]
     # Get the projection data for the scenarios
-    ft, fp = download_proj_data(rcp)
+    rid, ft, fp = get_cmip6_data(gcm, ssp)
     # And get the climate data
     fclim = download_clim_data()
 
@@ -168,13 +208,13 @@ def process_clim_data(basin, rcp):
 
         # Can now compute the anomalies, and do the bias correction.
         # Temperature
-        ds_t_avg = ds_t_sel.sel(time=slice('1961', '1990'))
+        ds_t_avg = ds_t_sel.sel(time=slice('1981', '2018'))
         ds_t_avg = ds_t_avg.groupby('time.month').mean(dim='time')
         # Anomaly
         ds_t_ano = ds_t_sel.groupby('time.month') - ds_t_avg
 
         # Precipitation
-        ds_p_avg = ds_p_sel.sel(time=slice('1961', '1990'))
+        ds_p_avg = ds_p_sel.sel(time=slice('1981', '2018'))
         ds_p_avg = ds_p_avg.groupby('time.month').mean(dim='time')
         # Anomaly
         ds_p_ano = ds_p_sel.groupby('time.month') - ds_p_avg
@@ -219,7 +259,8 @@ def process_clim_data(basin, rcp):
             ds_clim_sel.prcp
         ds_selection['prcp'] = ds_selection['prcp'].clip(0)
         # Add some attributes to the data.
-        ds_selection.attrs = {'basin': basin.RIVER_BASI, 'MRBID': basin.MRBID}
+        ds_selection.attrs = {'basin': basin.RIVER_BASI, 'MRBID': basin.MRBID,
+                              'gcm': rid}
         ds_selection.temp.attrs = {'unit': 'K'}
         ds_selection.prcp.attrs = {'unit': 'mm month-1'}
 
@@ -245,32 +286,39 @@ def select_glaciers(basin, gdf):
     return gdf.loc[in_bas]
 
 
-def run_hydro_projections(gdirs, rcps):
+def run_hydro_projections(gdirs, gcm, ssps, data_dir, basin):
     '''Small wrapper for running hydro simulations with the OGGM.
 
     Args:
     -----
     gdirs: list
         List of glacier directories.
-    rcps: list
-        List of rcp scenarios to run.
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
+    ssps: list (strings)
+        List of ssps scenarios to run.
+    data_dir: string
+        Path to the directory where to store the data.
+    basin: string
+        String of the basin MRBID. I.e. '3209'.
     '''
 
-    for rcp in rcps:
+    for ssp in ssps:
         # Download the files
-        ft, fp = download_proj_data(rcp)
+        rid, ft, fp = get_cmip6_data(gcm, ssp)
         # bias correct them
         workflow.execute_entity_task(gcm_climate.process_cmip_data, gdirs,
                                      # recognize the climate file for later
-                                     filesuffix='_CCSM4_{}'.format(rcp),
+                                     filesuffix='_' + rid,
                                      # temperature projections
                                      fpath_temp=ft,
                                      # precip projections
                                      fpath_precip=fp,
+                                     year_range=('1981', '2018'),
                                      )
 
-    for rcp in rcps:
-        rid = f'_CCSM4_{rcp}'
+    for ssp in ssps:
+        rid, _, _ = get_cmip6_data(gcm, ssp)
         workflow.execute_entity_task(
                              tasks.run_with_hydro, gdirs,
                              run_task=tasks.run_from_climate_data,
@@ -287,8 +335,22 @@ def run_hydro_projections(gdirs, rcps):
                              store_monthly_hydro=True,
                             )
 
+        # Where do we store the data?
+        data_dir = gha.utils.init_data_dir(data_dir)
+        basin_dir = gha.utils.mkdir(data_dir, basin)
+        # File suffixes
+        output_suffix = f'oggm_compiled_{basin}_{rid}.nc'
+        # If we do a custom path, we have to supply the whole path to OGGM.
+        path = os.path.join(basin_dir, output_suffix)
+        # Compile the output
+        utils.compile_run_output(gdirs,
+                                 path=path,
+                                 input_filesuffix=rid,
+                                 )
 
-def process_basin(basin, rcps, data_dir=None, parametric=False, window=15):
+
+def process_basin(basin, gcm, ssps, data_dir=None,
+                  parametric=False, window=15):
     '''Process the climate data for one basin. Takes a basin
     (geoseries) and downloads projection data, selects the region of interest
     and downscales it for the specified rcp scenarios. Saves the basin to disk.
@@ -298,8 +360,10 @@ def process_basin(basin, rcps, data_dir=None, parametric=False, window=15):
     -----
     basin: geopandas dataframe
         Dataframe with basin spatial data.
-    rcps: list
+    ssps: list
         List of strings with rcp scenarios.
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
     data_dir: str
         Path to where to store the data. Provide an absolute path.
     parametric: bool
@@ -316,19 +380,21 @@ def process_basin(basin, rcps, data_dir=None, parametric=False, window=15):
     bid = str(basin.iloc[0].MRBID)
     basin_dir = mkdir(data_dir, bid)
     # Loop the scenarios.
-    for rcp in rcps:
+    for ssp in ssps:
+        # Get the rid
+        rid, _, _ = get_cmip6_data(gcm,)
         # Get the data
-        _, ds_selection = process_clim_data(basin, rcp)
+        _, ds_selection = process_clim_data(basin, gcm, ssp)
         # Calc PET. This is inserting PET into the dataset.
         ds_selection = hydro.calc_PET(ds_selection)
         # Save it to file.
-        path = os.path.join(basin_dir, f'{bid}_{rcp}.nc')
+        path = os.path.join(basin_dir, f'{bid}_{rid}.nc')
         ds_selection.to_netcdf(path=path)
         # Hydro analysis.
         # This opens the glacier run-off file and the climate projection data
         # and compiles it to the discharge dataframes. After this the SPEI
         # dataframe is created and and saved to disk.
-        basin_hydro_analysis(basin, rcp, window, parametric, data_dir)
+        basin_hydro_analysis(basin, ssp, window, parametric, data_dir)
 
 
 def init_data_dir(data_dir):

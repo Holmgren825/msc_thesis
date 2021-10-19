@@ -49,7 +49,7 @@ srun -n 1 -c "${SLURM_JOB_CPUS_PER_NODE}" singularity exec /home/users/eholmgren
   # Increase number of allowed open file descriptors
   ulimit -n 65000
   # Finally, the run
-  python run_gha.py "$1"
+  python run_gha.py "$1" "$2"
 EOF
 
 # Write out

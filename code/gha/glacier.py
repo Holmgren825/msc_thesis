@@ -1,21 +1,25 @@
 '''Module for hydro calculations.'''
-import xarray as xr
 import os
 from oggm import utils, workflow
 import gha
 import gha.utils
 
 
-def glacier_simulations(basin, rcps, restart=False, test=False):
+def glacier_simulations(basin, gcm, ssps, data_dir, restart=False, test=False):
     '''Run glacier simulations for all glaciers within a basin.
+    Compiles the output.
 
     Args:
     -----
     basin: str
         String of the basin MBRID. I.e. '3209'. To simulate glaciers in
         all the basins simply pass 'all'.
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
     rcps: list(strings)
-        List of strings decalring the rcp scenarios to run.
+        List of strings decalring the ssp scenarios to run.
+    data_dir: string
+        Path to the directory where to store the data.
     restart: bool
         If to restart the the gdirs. If this is true, glacier directories (all)
         model data will be reset.
@@ -46,7 +50,7 @@ def glacier_simulations(basin, rcps, restart=False, test=False):
                                                   prepro_border=80,
                                                   prepro_base_url=base_url)
         # Run glacier projections.
-        gha.utils.run_hydro_projections(gdirs, rcps)
+        gha.utils.run_hydro_projections(gdirs, gcm, ssps, data_dir, basin)
     # If we already have all the data, load the gdirs.
     else:
         gdirs = workflow.init_glacier_directories(rgiids)

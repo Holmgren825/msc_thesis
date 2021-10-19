@@ -11,6 +11,7 @@ from gha.glacier import glacier_simulations, compile_basin_output
 from gha.utils import process_basin
 
 import geopandas as gpd
+import pandas as pd
 
 # OGGM init.
 cfg.initialize(logging_level='WARNING')
@@ -35,25 +36,39 @@ utils.mkdir(OUTPUT_DIR)
 log = logging.getLogger(__name__)
 log.workflow('Starting run for basins')
 
+# Read in the basin file.
 gdf = gpd.read_file('./data/glacier_basins.shp')
+# Read in the gcm info.
+gcm_df = pd.read_csv('/home/www/oggm/cmip6/all_gcm_list.csv', index_col=0)
+
 # Run the glacier simulations and basin processing.
-for basin_idx in sys.argv[1:]:
+for basin_idx, gcm_idx in zip(sys.argv[1], sys.argv[2]):
     # Get the basin and the MRBID.
     basin = gdf.iloc[[basin_idx]]
     mrbid = str(basin.iloc[0].MRBID)
+    # Get the gcm
+    gcm = gcm_df.loc[gcm_df.gcm == gcm_df.gcm.unique()[gcm_idx]]
+    # ssp scenarios we want to run.
+    # These are the ssp scenarios we want to do, but not all gcm have them.
+    # So have to check what it has.
+    ssps_wanted = ['ssp126', 'ssp245', 'ssp370', 'ssp585']
+    # Save the ones we get.
+    ssps = []
+    # Loop over wanter ssps.
+    for ssp in ssps_wanted:
+        df2 = gcm.loc[gcm['ssp'] == ssp]
+        # If it contains tas and pr, keep it.
+        if len(df2) == 2:
+            ssps.append(ssp)
     # log
     log.workflow(f'Starting run for {mrbid}')
     # Glacier run
-    rcps = ['rcp26', 'rcp45', 'rcp60', 'rcp85']
-    glacier_simulations(mrbid, rcps, restart=True)
+    glacier_simulations(mrbid, gcm, ssps, OUTPUT_DIR, restart=True)
 
-    # Compile the basin glaciers.
-    for rcp in rcps:
-        compile_basin_output(mrbid, rcp, OUTPUT_DIR)
     log.workflow('OGGM done')
     log.workflow('Begin basin climate processing and hydro analysis')
     # Process the basin climate data.
-    process_basin(basin, rcps, OUTPUT_DIR)
+    process_basin(basin, gcm, ssps, OUTPUT_DIR)
     log.workflow('Processing done')
 
 log.workflow('Basin completed')

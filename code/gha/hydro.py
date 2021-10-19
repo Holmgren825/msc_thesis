@@ -4,6 +4,7 @@ import os
 import xarray as xr
 from scipy.stats import fisk
 from oggm import cfg
+from gha.utils import get_cmip6_data
 
 
 def calc_PET(ds):
@@ -65,7 +66,7 @@ def calc_PET(ds):
     return ds
 
 
-def get_discharge_df(basin, data_dir, rcp):
+def get_discharge_df(basin, data_dir, gcm, ssp):
     '''Generate a xarray dataframe containing the compiled runoff from the oggm,
     the temperature, precipitation and PET from the projection data netcdf.
 
@@ -78,6 +79,8 @@ def get_discharge_df(basin, data_dir, rcp):
     rcp: str
          String declaring the rcp scenario to process.
     '''
+    # Get the rid
+    rid, _, _ = get_cmip6_data(gcm, ssp)
     # we need the cfg for prcp fac.
     cfg.initialize_minimal()
     # Prcp fac
@@ -88,9 +91,9 @@ def get_discharge_df(basin, data_dir, rcp):
     # Paths for the files. Leave the naming structure hard coded for now.
     # The compiled glacier output.
     glacier_path = os.path.join(basin_dir,
-                                f'oggm_compiled_{bid}_CCSM4_{rcp}.nc')
+                                f'oggm_compiled_{bid}_{rid}.nc')
     # Projection data path
-    proj_path = os.path.join(basin_dir, f'{bid}_{rcp}.nc')
+    proj_path = os.path.join(basin_dir, f'{bid}_{rid}.nc')
 
     with xr.open_dataset(glacier_path, use_cftime=True) as ds_gl,\
             xr.open_dataset(proj_path, use_cftime=True) as ds_proj:
@@ -191,6 +194,10 @@ def get_discharge_df(basin, data_dir, rcp):
         hydro_ds = hydro_ds.assign(D=D)
         hydro_ds.D.attrs = {'unit': 'mm month-1'}
 
+        # Add the maximum glaciated area as an attribute?
+        hydro_proj_ds.attrs = {'gcm': rid,
+                               'max glaciated area': glaciated_area}
+
         return hydro_proj_ds, hydro_ds
 
 
@@ -283,7 +290,7 @@ def calc_SPEI(ds, ds_hist=None, window=15, parametric=True):
     return SPEI
 
 
-def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
+def basin_hydro_analysis(basin, gcm, ssp, window, parametric, data_dir):
     '''Function to do the complete hydro analysis of a basin for the given rcp
     scenario. Requires the glacier runoff and basin climate data to be
     available in the data dir. Saves the dataframes to disk.
@@ -292,8 +299,10 @@ def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
     -----
     basin: geopandas dataframe
         Dataseries of the basin. Should contain the geometry.
-    rcp: str
-         String declaring the rcp scenario to process.
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
+    ssp: str
+         String declaring the ssp scenario to process.
     window: int
         Window size for SPEI.
     parametric: bool
@@ -303,16 +312,18 @@ def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
 
     '''
 
+    # rdi
+    rid, _, _ = get_cmip6_data(gcm, ssp)
     # Get the discharge df
-    hydro_proj_ds, hydro_ds = get_discharge_df(basin, data_dir, rcp)
+    hydro_proj_ds, hydro_ds = get_discharge_df(basin, data_dir, gcm, ssp)
     # Extract the mrbid and get the basin dir.
     mrbid = str(basin.iloc[0].MRBID)
     basin_dir = os.path.join(data_dir, mrbid)
     # Save the hydro dataframe.
-    path = os.path.join(basin_dir, f'{mrbid}_discharge_proj_{rcp}.nc')
+    path = os.path.join(basin_dir, f'{mrbid}_discharge_proj_{rid}.nc')
     hydro_proj_ds.to_netcdf(path=path)
     # Historic
-    path = os.path.join(basin_dir, f'{mrbid}_discharge_hist_{rcp}.nc')
+    path = os.path.join(basin_dir, f'{mrbid}_discharge_hist_{rid}.nc')
     hydro_ds.to_netcdf(path=path)
 
     # Get the SPEI
@@ -344,5 +355,5 @@ def basin_hydro_analysis(basin, rcp, window, parametric, data_dir):
                                         liq. prpc without factor'''}
 
         # Save this as well.
-        path = os.path.join(basin_dir, f'{mrbid}_SPEI_{parametric}_{rcp}.nc')
+        path = os.path.join(basin_dir, f'{mrbid}_SPEI_{parametric}_{rid}.nc')
         SPEI_ds.to_netcdf(path=path)
