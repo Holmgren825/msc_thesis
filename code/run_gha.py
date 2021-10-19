@@ -7,8 +7,8 @@ import oggm.cfg as cfg
 import oggm.utils as utils
 
 # gha
-from gha.glacier import glacier_simulations, compile_basin_output
-from gha.utils import process_basin
+from gha.glacier import glacier_simulations
+from gha.basin import process_basin
 
 import geopandas as gpd
 import pandas as pd

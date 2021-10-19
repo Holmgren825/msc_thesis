@@ -1,7 +1,7 @@
 '''Module for hydro calculations.'''
 import os
-from oggm import utils, workflow
-import gha
+from oggm import utils, workflow, tasks
+from oggm.shop import gcm_climate
 import gha.utils
 
 
@@ -50,10 +50,73 @@ def glacier_simulations(basin, gcm, ssps, data_dir, restart=False, test=False):
                                                   prepro_border=80,
                                                   prepro_base_url=base_url)
         # Run glacier projections.
-        gha.utils.run_hydro_projections(gdirs, gcm, ssps, data_dir, basin)
+        run_hydro_projections(gdirs, gcm, ssps, data_dir, basin)
     # If we already have all the data, load the gdirs.
     else:
         gdirs = workflow.init_glacier_directories(rgiids)
+
+
+def run_hydro_projections(gdirs, gcm, ssps, data_dir, basin):
+    '''Small wrapper for running hydro simulations with the OGGM.
+
+    Args:
+    -----
+    gdirs: list
+        List of glacier directories.
+    gcm: pandas dataframe
+        Contains metadata about the gcm and the filepaths etc.
+    ssps: list (strings)
+        List of ssps scenarios to run.
+    data_dir: string
+        Path to the directory where to store the data.
+    basin: string
+        String of the basin MRBID. I.e. '3209'.
+    '''
+
+    for ssp in ssps:
+        # Download the files
+        rid, ft, fp = gha.utils.get_cmip6_data(gcm, ssp)
+        # bias correct them
+        workflow.execute_entity_task(gcm_climate.process_cmip_data, gdirs,
+                                     # recognize the climate file for later
+                                     filesuffix='_' + rid,
+                                     # temperature projections
+                                     fpath_temp=ft,
+                                     # precip projections
+                                     fpath_precip=fp,
+                                     year_range=('1981', '2018'),
+                                     )
+
+    for ssp in ssps:
+        rid, _, _ = gha.utils.get_cmip6_data(gcm, ssp)
+        workflow.execute_entity_task(
+                             tasks.run_with_hydro, gdirs,
+                             run_task=tasks.run_from_climate_data,
+                             ys=2020,
+                             # Use gcm_data
+                             climate_filename='gcm_data',
+                             # Use the scenario
+                             climate_input_filesuffix=rid,
+                             # When to start?
+                             init_model_filesuffix='_historical',
+                             # Good naming for recognizing later
+                             output_filesuffix=rid,
+                             # Store monthyl?
+                             store_monthly_hydro=True,
+                            )
+
+        # Where do we store the data?
+        data_dir = gha.utils.init_data_dir(data_dir)
+        basin_dir = gha.utils.mkdir(data_dir, basin)
+        # File suffixes
+        output_suffix = f'oggm_compiled_{basin}_{rid}.nc'
+        # If we do a custom path, we have to supply the whole path to OGGM.
+        path = os.path.join(basin_dir, output_suffix)
+        # Compile the output
+        utils.compile_run_output(gdirs,
+                                 path=path,
+                                 input_filesuffix=rid,
+                                 )
 
 
 def compile_basin_output(basin, rcp, data_dir, test=False):
