@@ -42,7 +42,7 @@ gdf = gpd.read_file('./data/glacier_basins.shp')
 gcm_df = pd.read_csv('/home/www/oggm/cmip6/all_gcm_list.csv', index_col=0)
 
 # Run the glacier simulations and basin processing.
-for basin_idx, gcm_idx in zip(sys.argv[1], sys.argv[2]):
+for basin_idx, gcm_idx in zip(sys.argv[1:], sys.argv[2:]):
     # Get the basin and the MRBID.
     basin = gdf.iloc[[basin_idx]]
     mrbid = str(basin.iloc[0].MRBID)
