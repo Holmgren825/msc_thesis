@@ -93,6 +93,7 @@ def run_hydro_projections(gdirs, gcm, ssps, data_dir, basin):
                              tasks.run_with_hydro, gdirs,
                              run_task=tasks.run_from_climate_data,
                              ys=2020,
+                             ye=2100,
                              # Use gcm_data
                              climate_filename='gcm_data',
                              # Use the scenario
