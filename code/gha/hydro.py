@@ -196,7 +196,7 @@ def get_discharge_df(basin, data_dir, gcm, ssp):
 
         # Add the maximum glaciated area as an attribute?
         hydro_proj_ds.attrs = {'gcm': rid,
-                               'max glaciated area': glaciated_area}
+                               'max glaciated area': glaciated_area.values}
 
         return hydro_proj_ds, hydro_ds
 

@@ -41,6 +41,11 @@ def process_clim_data(basin, gcm, ssp):
     with xr.open_dataset(ft, use_cftime=True) as ds_t,\
             xr.open_dataset(fp, use_cftime=True) as ds_p,\
             xr.open_dataset(fclim, use_cftime=True) as ds_clim:
+
+        # Subselection of projection data
+        ds_t = ds_t.sel(time=slice('1950', '2100'))
+        ds_p = ds_p.sel(time=slice('1950', '2100'))
+
         # Longitude correcction of ds.
         for ds in [ds_t, ds_p, ds_clim]:
             if ds.lon.max() >= 181.0:
